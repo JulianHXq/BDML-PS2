@@ -20,14 +20,18 @@ fun_preprocess_personas <- function(.db) {
   #' hombre, \code{bin_male}; jefe del hogar, \code{bin_head}; ocupado,
   #' \code{bin_occup}; inactivo, \code{bin_inactivo}; en edad de trabajar,
   #' \code{bin_edad_trabajar}; menor de edad, \code{bin_minor}; mayor de 65,
-  #' \code{bin_old}; y su máximo nivel educativo, \code{cat_educ}.
+  #' \code{bin_old}; su máximo nivel educativo, \code{cat_educ}; si pertenece
+  #' a la unidad de gasto, \code{bin_ug}; si cotiza a pensión,
+  #' \code{bin_cotiza}; y si recibió pensión el mes pasado,
+  #' \code{bin_pensionado}.
   
   # Variables que usamos y sus nombres descriptivos. Todas existen tanto en
   # train como en test (verificado en los datos).
   text_vars <- c('id', 'id_persona' = 'Orden', 'num_age' = 'P6040',
                  'cat_gender' = 'P6020', 'bin_employed' = 'Oc',
                  'bin_inactivo' = 'Ina', 'cat_educ' = 'P6210',
-                 'cat_relationship' = 'P6050')
+                 'cat_relationship' = 'P6050',
+                 'cat_cotiza' = 'P6920', 'cat_recibe_pension' = 'P7500s2')
   
   db_result <- .db |>
     select(all_of(text_vars)) |>
@@ -54,10 +58,26 @@ fun_preprocess_personas <- function(.db) {
                         levels = 1:6,
                         ordered = TRUE,
                         labels = c("Ninguno", "Preescolar", "Primaria",
-                                   "Secundaria", "Media", "Universitaria"))
+                                   "Secundaria", "Media", "Universitaria")),
+      # Unidad de gasto: personas que comparten el presupuesto del hogar. Según
+      # P6050, quedan por fuera el empleado(a) del servicio (6), el
+      # pensionista (7) y el trabajador (8). Así lo define el DANE: en los
+      # datos, Nper - Npersug es exactamente el número de estas personas.
+      bin_ug = ifelse(test = cat_relationship %in% c(6, 7, 8), yes = 0, no = 1),
+      # P6920: ¿Está cotizando a un fondo de pensiones? 1 = sí, 2 = no,
+      # 3 = ya es pensionado. Solo se pregunta a los ocupados: NA significa
+      # que la persona no trabaja y, por lo tanto, no cotiza. Quien ya es
+      # pensionado (3) tampoco cotiza; su pensión se captura con P7500s2.
+      bin_cotiza = ifelse(test = cat_cotiza %in% 1, yes = 1, no = 0),
+      # P7500s2: ¿El mes pasado recibió pagos por pensiones o jubilaciones?
+      # 1 = sí, 2 = no, 9 = no sabe. Solo se pregunta a quien respondió "sí"
+      # en P7495 (¿recibió pagos por arriendos y/o pensiones?): NA significa
+      # que no recibió pensión. "No sabe" (9) se trata como no.
+      bin_pensionado = ifelse(test = cat_recibe_pension %in% 1, yes = 1, no = 0)
     ) |>
     select(id, id_persona, bin_male, bin_head, bin_occup, bin_inactivo,
-           bin_edad_trabajar, cat_educ, bin_minor, bin_old)
+           bin_edad_trabajar, cat_educ, bin_minor, bin_old,
+           bin_ug, bin_cotiza, bin_pensionado)
   
   return(db_result)
 }
