@@ -3,7 +3,7 @@
 #
 # Objetivo: Crear una sola vez las particiones de validación cruzada (k = 5,
 # semilla fija) para que todos los modelos se evalúen sobre los mismos
-# hogares, como en las clases 7 a 9.
+# hogares.
 #
 # Etapa del Problem Set: Base de la Etapa 2.
 # Insumos:  03_temp/train_clean.rds.

@@ -2,8 +2,8 @@
 # fun_preprocess_personas.R
 #
 # Función para limpiar la base de personas: renombra las variables con
-# nombres descriptivos y crea indicadores a nivel persona. Adaptada de la
-# Clase 7. Requiere que el paquete tidyverse esté cargado.
+# nombres descriptivos y crea indicadores a nivel persona. Requiere que el
+# paquete tidyverse esté cargado.
 ##########################################################
 
 fun_preprocess_personas <- function(.db) {
@@ -43,8 +43,8 @@ fun_preprocess_personas <- function(.db) {
       # Oc e Ina valen 1 (sí) o NA (no), según el diccionario del DANE.
       bin_occup = ifelse(test = is.na(bin_employed), yes = 0, no = 1),
       bin_inactivo = ifelse(test = is.na(bin_inactivo), yes = 0, no = 1),
-      # Grupos de edad. La edad de trabajar (18 a 65 años) es la definición
-      # usada en la Clase 7.
+      # Grupos de edad. Se considera en edad de trabajar a las personas de
+      # 18 a 65 años.
       bin_minor = ifelse(test = num_age < 18, yes = 1, no = 0),
       bin_old = ifelse(test = num_age > 65, yes = 1, no = 0),
       bin_edad_trabajar = as.integer(between(num_age, 18, 65)),

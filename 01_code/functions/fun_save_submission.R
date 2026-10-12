@@ -2,17 +2,17 @@
 # fun_save_submission.R
 #
 # Funciones para convertir las probabilidades predichas por un modelo en un
-# archivo listo para subir a Kaggle. Reemplazan los pasos finales del script
-# de la Clase 7 (predecir, aplicar el umbral, armar id/pobre, nombrar el
-# archivo y guardarlo), que son idénticos en todos los envíos.
+# archivo listo para subir a Kaggle. Reúnen los pasos que se repiten en
+# todos los envíos: aplicar el umbral, armar id/pobre, nombrar el archivo,
+# verificar su formato y guardarlo.
 ##########################################################
 
 fun_hiperparam_str <- function(.x, .digits = 4) {
   #' Convertir un hiperparámetro numérico en texto para nombres de archivo
   #'
   #' @description \code{fun_hiperparam_str()} redondea un número y reemplaza
-  #' el punto decimal por un guion bajo, siguiendo la convención de la
-  #' Clase 7. Por ejemplo, 0.0123 se convierte en "0_0123".
+  #' el punto decimal por un guion bajo, para que los nombres de archivo no
+  #' tengan puntos. Por ejemplo, 0.0123 se convierte en "0_0123".
   #'
   #' @param .x \code{numeric}. Valor del hiperparámetro.
   #' @param .digits \code{integer}. Número de decimales al redondear.

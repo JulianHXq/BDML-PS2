@@ -2,9 +2,8 @@
 # fun_colapse_personas.R
 #
 # Función para llevar la base de personas a nivel hogar: construye variables
-# del hogar a partir de sus miembros. Adaptada de la Clase 7, con una
-# corrección en la tasa de dependencia. Requiere que el paquete tidyverse
-# esté cargado.
+# del hogar a partir de sus miembros. Requiere que el paquete tidyverse esté
+# cargado.
 ##########################################################
 
 fun_colapse_personas <- function(.db) {
@@ -47,17 +46,13 @@ fun_colapse_personas <- function(.db) {
               bin_hogar_pensionado = max(bin_pensionado * bin_ug, na.rm = TRUE)) |>
     mutate(
       # Tasa de dependencia: dependientes (menores de 18 y mayores de 65) por
-      # cada persona en edad de trabajar (18 a 65).
-      # CORRECCIÓN frente a la Clase 7: allí el denominador era el número de
-      # personas fuera de la edad de trabajar, que son exactamente los mismos
-      # dependientes del numerador. La "tasa" solo podía valer 0 o 1 y
-      # funcionaba como un indicador de "hay dependientes".
+      # cada persona en edad de trabajar (18 a 65), que son quienes pueden
+      # generar ingreso para sostenerlos.
       prop_dependencia = (num_minors + num_old) / na_if(num_edad_trabajar, 0),
       prop_inactividad = num_inactivos / na_if(num_edad_trabajar, 0),
-      # Sin miembros de 18 a 65 años (sobre todo adultos mayores que viven
-      # solos, 6,4% de los hogares de entrenamiento), ambas tasas no están
-      # definidas. Como en la Clase 7, se reemplazan por 0. Estos hogares
-      # siguen siendo identificables porque tienen num_edad_trabajar = 0.
+      # Sin miembros de 18 a 65 años, ambas tasas no están
+      # definidas y se reemplazan por 0. Estos hogares siguen siendo
+      # identificables porque tienen num_edad_trabajar = 0.
       prop_dependencia = replace_na(prop_dependencia, 0),
       prop_inactividad = replace_na(prop_inactividad, 0),
       # Proporción de ocupados: personas que generan ingreso laboral por cada
