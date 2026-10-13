@@ -49,9 +49,7 @@ fun_preprocess_hogares <- function(.db) {
     mutate(
       cat_ubicacion = factor(Dominio, levels = niveles_dominio),
       # P5090: la vivienda ocupada por este hogar es... Se conservan las 6
-      # categorías, en lugar de un indicador de "propietario" o "arrienda",
-      # porque tienen niveles de pobreza muy distintos: por ejemplo, 9,8% en
-      # "propia, la están pagando" frente a 48,3% en "posesión sin título".
+      # categorías.
       cat_tenencia = factor(P5090,
                             levels = 1:6,
                             labels = c("Propia pagada", "Propia pagando",
@@ -62,7 +60,6 @@ fun_preprocess_hogares <- function(.db) {
       # garajes. Según el diccionario, incluye los cuartos de pensionistas y
       # empleados domésticos internos; por eso el numerador es Nper (todas
       # las personas que viven en el hogar) y no solo la unidad de gasto.
-      # P5000 nunca es cero ni falta, en train ni en test.
       num_personas_cuarto = Nper / P5000
     )
   

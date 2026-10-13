@@ -36,10 +36,8 @@ fun_colapse_personas <- function(.db) {
               num_inactivos = sum(bin_inactivo * bin_edad_trabajar, na.rm = TRUE),
               num_edad_trabajar = sum(bin_edad_trabajar, na.rm = TRUE),
               cat_maxEduc = max(cat_educ, na.rm = TRUE),
-              # Variables de la unidad de gasto: se multiplica por bin_ug para
-              # contar solo a quienes comparten el presupuesto del hogar
+              # Variables de la unidad de gasto: quienes comparten el presupuesto del hogar
               # (excluye servicio doméstico, pensionistas y trabajadores).
-              # num_personas_ug coincide con Npersug de la base de hogares.
               num_personas_ug = sum(bin_ug, na.rm = TRUE),
               num_ocupados = sum(bin_occup * bin_ug, na.rm = TRUE),
               num_cotizantes = sum(bin_cotiza * bin_ug, na.rm = TRUE),

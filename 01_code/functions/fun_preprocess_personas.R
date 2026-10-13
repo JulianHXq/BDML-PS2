@@ -26,7 +26,7 @@ fun_preprocess_personas <- function(.db) {
   #' \code{bin_pensionado}.
   
   # Variables que usamos y sus nombres descriptivos. Todas existen tanto en
-  # train como en test (verificado en los datos).
+  # train como en test.
   text_vars <- c('id', 'id_persona' = 'Orden', 'num_age' = 'P6040',
                  'cat_gender' = 'P6020', 'bin_employed' = 'Oc',
                  'bin_inactivo' = 'Ina', 'cat_educ' = 'P6210',
