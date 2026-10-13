@@ -60,7 +60,12 @@ fun_colapse_personas <- function(.db) {
       # que usa el DANE para el ingreso per cápita con el que define la
       # pobreza. Nunca es cero: el jefe del hogar siempre pertenece a la
       # unidad de gasto.
-      prop_ocupados = num_ocupados / num_personas_ug
+      prop_ocupados = num_ocupados / num_personas_ug,
+      # La educación se trabajó como factor ordenado solo para poder tomar el
+      # máximo del hogar. Para los modelos se convierte en factor sin orden:
+      # así cada nivel entra como su propia variable dicotómica. Los niveles y su orden de
+      # presentación se conservan ("Ninguno" sigue siendo la categoría base).
+      cat_maxEduc = factor(cat_maxEduc, ordered = FALSE)
     ) |>
     select(id, bin_head_male, num_minors, num_old, num_inactivos,
            num_edad_trabajar, prop_dependencia, prop_inactividad,
