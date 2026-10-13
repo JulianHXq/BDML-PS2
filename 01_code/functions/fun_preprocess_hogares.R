@@ -19,7 +19,8 @@ fun_preprocess_hogares <- function(.db) {
   #'
   #' @returns \code{tibble}. Una fila por hogar con el id del hogar, \code{id};
   #' la ciudad o zona, \code{cat_ubicacion}; la tenencia de la vivienda,
-  #' \code{cat_tenencia}; y, solo en train, si el hogar es pobre,
+  #' \code{cat_tenencia}; el número de personas por cuarto,
+  #' \code{num_personas_cuarto}; y, solo en train, si el hogar es pobre,
   #' \code{Pobre}.
   
   # Dominio: 23 ciudades, "RESTO URBANO" y "RURAL" (25 categorías). OJO: el
@@ -55,7 +56,14 @@ fun_preprocess_hogares <- function(.db) {
                             levels = 1:6,
                             labels = c("Propia pagada", "Propia pagando",
                                        "Arriendo", "Usufructo",
-                                       "Posesion sin titulo", "Otra"))
+                                       "Posesion sin titulo", "Otra")),
+      # Hacinamiento: personas por cuarto. P5000 cuenta los cuartos de que
+      # dispone el hogar, incluida la sala-comedor y sin cocinas, baños ni
+      # garajes. Según el diccionario, incluye los cuartos de pensionistas y
+      # empleados domésticos internos; por eso el numerador es Nper (todas
+      # las personas que viven en el hogar) y no solo la unidad de gasto.
+      # P5000 nunca es cero ni falta, en train ni en test.
+      num_personas_cuarto = Nper / P5000
     )
   
   # La variable de resultado solo existe en train.
@@ -65,10 +73,10 @@ fun_preprocess_hogares <- function(.db) {
       # trata el primer nivel del factor como la clase positiva al calcular
       # las métricas (F1, precisión, recall).
       mutate(Pobre = factor(Pobre, levels = c(1, 0), labels = c("Yes", "No"))) |>
-      select(id, cat_ubicacion, cat_tenencia, Pobre)
+      select(id, cat_ubicacion, cat_tenencia, num_personas_cuarto, Pobre)
   } else {
     db_result <- db_result |>
-      select(id, cat_ubicacion, cat_tenencia)
+      select(id, cat_ubicacion, cat_tenencia, num_personas_cuarto)
   }
   
   return(db_result)
