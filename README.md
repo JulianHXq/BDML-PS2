@@ -21,7 +21,7 @@ source("01_code/00_rundirectory.R")
 
 Este script maestro llama a los demás scripts en orden, en tres bloques:
 
-- **Bloque A, preparación de los datos (scripts 01 a 05):** obtiene los datos, los limpia y une, define los predictores comunes, describe la variable de resultado y crea las particiones de validación cruzada. Se corre una vez y guarda sus resultados en `03_temp/`.
+- **Bloque A, preparación de los datos (scripts 01 a 05):** obtiene los datos, los limpia y une, define los conjuntos de predictores, describe la variable de resultado y crea las particiones de validación cruzada. Se corre una vez y guarda sus resultados en `03_temp/`.
 - **Bloque B, modelos (scripts 06 a 12):** un script por algoritmo. Cada uno entrena varias variantes y guarda una predicción para Kaggle por variante.
 - **Bloque C, análisis (scripts 13 a 15):** compara los algoritmos, analiza el mejor modelo y discute sus implicaciones de política. Produce las figuras y tablas de las presentaciones.
 
@@ -55,7 +55,52 @@ La competencia incluye:
 | `sample_submission.csv` | Formato de envío a Kaggle (`id`, `pobre`) |
 | `ddi-documentation-spanish-608.pdf` | Diccionario de variables del DANE |
 
-Las bases de hogares y personas se unen con la variable `id`. Varias variables de la base de entrenamiento no están en la de prueba.
+Las bases de hogares y personas se unen con la variable `id`. Las variables de ingreso (salarios, pensiones, ingreso total del hogar) solo están en la base de entrenamiento, por lo que no se usan como predictores.
+
+## Construcción de la base de modelación
+
+El script `02_clean_merge_data.R` limpia las bases de personas, las resume a nivel hogar, las une con la base de hogares y guarda el resultado en `03_temp/`:
+
+| Base | Hogares | Columnas |
+|:--|--:|:--|
+| `03_temp/train_clean.rds` | 164.960 | `Pobre` y 16 predictores |
+| `03_temp/test_clean.rds` | 66.168 | `id` y 16 predictores |
+
+Ninguna de las dos tiene valores faltantes. El `id` se elimina de la base de entrenamiento para que ningún modelo lo use como predictor, y se conserva en la de prueba porque es la llave del archivo de Kaggle.
+
+### Predictores
+
+| Variable | Tipo | Definición | Fuente |
+|:--|:--|:--|:--|
+| **Ubicación y vivienda** | | | |
+| `cat_ubicacion` | Factor (25) | Ciudad o zona | `Dominio` |
+| `cat_tenencia` | Factor (6) | Propia pagada, propia pagando, arriendo, usufructo, posesión sin título, otra | `P5090` |
+| `num_personas_cuarto` | Número | Hacinamiento: personas por cuarto | `Nper / P5000` |
+| **Composición del hogar** | | | |
+| `bin_head_male` | 0/1 | El jefe del hogar es hombre | `P6020`, `P6050` |
+| `num_minors` | Número | Personas menores de 18 años | `P6040` |
+| `num_old` | Número | Personas mayores de 65 años | `P6040` |
+| `num_edad_trabajar` | Número | Personas de 18 a 65 años | `P6040` |
+| `prop_dependencia` | Número | (menores de 18 + mayores de 65) / personas de 18 a 65 | `P6040` |
+| `num_personas_ug` | Número | Personas de la unidad de gasto | `P6050` |
+| **Trabajo e ingresos** | | | |
+| `num_ocupados` | Número | Ocupados de la unidad de gasto | `Oc` |
+| `prop_ocupados` | Número | Ocupados / personas de la unidad de gasto | `Oc`, `P6050` |
+| `num_inactivos` | Número | Inactivos de 18 a 65 años | `Ina` |
+| `prop_inactividad` | Número | Inactivos / personas de 18 a 65 años | `Ina` |
+| `num_cotizantes` | Número | Personas de la unidad de gasto que cotizan a pensión | `P6920` |
+| `bin_hogar_pensionado` | 0/1 | Alguien de la unidad de gasto recibió pensión el mes pasado | `P7500s2` |
+| **Capital humano** | | | |
+| `cat_maxEduc` | Factor (6) | Nivel educativo más alto del hogar, de "Ninguno" a "Universitaria" | `P6210` |
+
+### Decisiones de construcción
+
+- **Unidad de gasto.** Los conteos de ocupados, cotizantes y pensionados excluyen al servicio doméstico, los pensionistas y los trabajadores que viven en el hogar (`P6050` = 6, 7 y 8), porque no comparten su presupuesto. Así lo define el DANE: en los datos, `Nper - Npersug` es exactamente el número de estas personas, y la pobreza se define comparando el ingreso de la unidad de gasto dividido entre `Npersug` con la línea de pobreza.
+- **Tasa de dependencia.** Divide a los dependientes entre las personas en edad de trabajar, que son quienes pueden generar ingreso para sostenerlos. En los hogares sin miembros de 18 a 65 años (6,4% de los hogares de entrenamiento), las tasas de dependencia e inactividad no están definidas y se reemplazan por 0. Estos hogares se identifican con `num_edad_trabajar = 0`.
+- **Valores faltantes por diseño de la encuesta.** La pregunta de cotización (`P6920`) solo se hace a los ocupados, y la de pensión (`P7500s2`) solo a quienes reportan recibir arriendos o pensiones (`P7495`). En ambos casos, un valor faltante significa "no" y se codifica como 0.
+- **Ciudades.** La base de prueba no tiene hogares de Bogotá. Para que train y test tengan las mismas categorías, la lista de los 25 dominios se fija en la función de hogares.
+- **Educación.** Se construye como factor ordenado para tomar el máximo del hogar y luego se convierte en factor sin orden, para que cada nivel entre al modelo como su propia variable dicotómica.
+- **Tenencia de la vivienda.** Se conservan las 6 categorías porque tienen niveles de pobreza muy distintos (por ejemplo, 9,8% en "propia, la están pagando" frente a 48,3% en "posesión sin título").
 
 ## Estructura del código
 
@@ -64,8 +109,8 @@ Las bases de hogares y personas se unen con la variable `id`. Varias variables d
 | `00_rundirectory.R` | Script maestro: corre todo el análisis en orden |
 | **Bloque A: datos** | |
 | `01_get_data.R` | Obtiene los datos crudos de Kaggle y verifica que estén completos |
-| `02_clean_merge_data.R` | Limpia personas y hogares, construye variables a nivel hogar y une las bases |
-| `03_build_features.R` | Define los conjuntos de predictores que usan todos los modelos |
+| `02_clean_merge_data.R` | Limpia personas y hogares, construye las variables a nivel hogar, une las bases, verifica y guarda las bases limpias |
+| `03_build_features.R` | Define, con nombre, los conjuntos de predictores entre los que escogen los modelos |
 | `04_descriptive_analysis.R` | Etapa 1: distribución de la pobreza, desbalance de clases y relación con los predictores |
 | `05_create_cv_folds.R` | Crea las particiones de validación cruzada compartidas por todos los modelos |
 | **Bloque B: modelos** | |
@@ -80,12 +125,17 @@ Las bases de hogares y personas se unen con la variable `id`. Varias variables d
 | `13_compare_algorithms.R` | Etapa 2: comparación de algoritmos (presentación *compare*) |
 | `14_best_model_analysis.R` | Etapa 3: análisis del mejor modelo (presentación *best*) |
 | `15_policy_analysis.R` | Etapa 4: filtración vs. subcobertura y viabilidad de una encuesta corta |
-| **Funciones** | |
-| `functions/fun_save_submission.R` | Convierte probabilidades en un archivo validado para Kaggle |
+| **Funciones** (`01_code/functions/`) | |
+| `fun_preprocess_personas.R` | Limpia la base de personas y crea indicadores por persona |
+| `fun_colapse_personas.R` | Resume las personas a nivel hogar |
+| `fun_preprocess_hogares.R` | Prepara la base de hogares y la variable de resultado |
+| `fun_save_submission.R` | Convierte probabilidades en un archivo validado para Kaggle |
 
 ### Igualdad de condiciones entre algoritmos
 
-Para que la comparación entre algoritmos refleje el algoritmo y no otras decisiones, todos los modelos usan los mismos predictores (`03_build_features.R`) y las mismas particiones de validación cruzada (`05_create_cv_folds.R`).
+`03_build_features.R` define varios conjuntos de predictores con nombre. Cada envío a Kaggle puede usar cualquiera de ellos, porque probar distintos conjuntos es parte de la iteración. Para la comparación entre algoritmos, en cambio, solo se ponen lado a lado los envíos que usaron **el mismo conjunto**, de modo que la diferencia de puntaje refleje el algoritmo y no las variables. Por eso cada algoritmo tiene al menos una variante con el conjunto común. Comparar un mismo algoritmo con distintos conjuntos muestra, a su vez, el papel de la ingeniería de variables.
+
+Además, todos los modelos se evalúan sobre las mismas particiones de validación cruzada (`05_create_cv_folds.R`).
 
 ## Flujo de trabajo para los envíos a Kaggle
 
@@ -139,7 +189,7 @@ BDML-PS2/
 │   ├── figures/
 │   ├── tables/
 │   └── predictions/          # archivos .csv enviados a Kaggle
-└── 03_temp/                  # datos y modelos intermedios (no versionados)
+└── 03_temp/                  # bases limpias y modelos intermedios (no versionados)
 ```
 
 ## Salidas
@@ -153,6 +203,6 @@ Todas las salidas se generan automáticamente en `02_outputs/`:
 
 ## Software
 
-- R (versión 4.3 o superior)
+- R 4.6.1 (versión con la que se desarrolló y probó el código)
 - Paquetes: se instalan y cargan automáticamente con `pacman::p_load()`
 - Opcional, para la descarga automática: Python y la CLI de Kaggle
