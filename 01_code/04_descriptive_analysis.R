@@ -46,14 +46,16 @@ ggplot(train, aes(x = factor(Pobre))) +
 
 # Clasificador ingenuo: todos son NO POBRES
 real <- as.data.frame(train$Pobre)
-real <- mutate(real, pred = 1, Pobre = case_when( train$Pobre == "Yes" ~ 1,
-                                          train$Pobre == "No" ~ 0))
+real <- real %>% 
+  rename(observed = "train$Pobre")
+real <- mutate(real, pred = "No")
 
 # Matriz de confusión
-TP <- sum(real$Pobre == 0 & real$pred == 0, na.rm = TRUE)
-TN <- sum(real$Pobre == 1 & real$pred == 1, na.rm = TRUE)
-FP <- sum(real$Pobre == 1 & real$pred == 0, na.rm = TRUE)
-FN <- sum(real$Pobre == 0 & real$pred== 1, na.rm = TRUE)
+
+TP <- sum(real$obs == "Yes" & real$pred == "Yes")
+TN <- sum(real$obs == "No" & real$pred == "No")
+FP <- sum(real$obs == "No" & real$pred == "Yes")
+FN <- sum(real$obs == "Yes" & real$pred == "No")
 
 # Métricas
 accuracy <- (TP + TN) / (TP + TN + FP + FN)
@@ -105,5 +107,40 @@ ggplot(balance, aes(x = reorder(Variable, abs(SMD)),
   ) +
   theme_minimal()
 
-### Variación de Bogotá
+########## Variación de Bogotá: Cómo cambia la prueba de balance?
+
+
+# Pasar los datos a formato largo
+balance_graf <- balance %>%
+  pivot_longer(
+    cols = c(Con_Bogota, Sin_Bogota),
+    names_to = "Grupo",
+    values_to = "SMD"
+  )
+
+# Gráfico de barras
+ggplot(balance_graf, aes(
+  x = reorder(Variable, SMD),
+  y = SMD,
+  fill = Grupo
+)) +
+  geom_col(position = "dodge", width = 0.7) +
+  geom_hline(yintercept = 0.1, linetype = "dashed",  color = "red") +
+  coord_flip() +
+  scale_fill_manual(
+    values = c(
+      "Con_Bogota" = "#D97736",
+      "Sin_Bogota" = "#3285BA"
+    ),
+    labels = c("Con Bogotá", "Sin Bogotá")
+  ) +
+  labs(
+    title = "Balance de Train frente a Test",
+    subtitle = "Comparación con y sin Bogotá",
+    x = NULL,
+    y = "Diferencia estandarizada absoluta (SMD)",
+    fill = NULL
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
 
