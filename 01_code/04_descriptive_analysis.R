@@ -77,6 +77,33 @@ metricas
 ###### DIFERENCIA DE MEDIAS ESTANDARIZADAS
 
 
+# Gráfico
+vars <- intersect(names(train), names(test))
+vars <- vars[sapply(train[vars], is.numeric) &
+               sapply(test[vars], is.numeric)]
+
+# Calcular SMD
+balance <- data.frame(
+  Variable = vars,
+  SMD = sapply(vars, function(v) {
+    x <- train[[v]]
+    y <- test[[v]]
+    
+    (mean(x, na.rm = TRUE) - mean(y, na.rm = TRUE)) /
+      sqrt((var(x, na.rm = TRUE) + var(y, na.rm = TRUE)) / 2)
+  })
+)
+
+# Gráfico (DIFERENCIAS MAYORES A 0.1 SON CONSIDERABLES (NO HAY EN ESTAS Xs))
+ggplot(balance, aes(x = reorder(Variable, abs(SMD)),
+                    y = abs(SMD))) +
+  geom_col(fill = "steelblue", width = 0.5) +
+  coord_flip() +
+  labs(
+    x = NULL,
+    y = "Standardized mean differences (SMD)"
+  ) +
+  theme_minimal()
 
 ### Variación de Bogotá
 
