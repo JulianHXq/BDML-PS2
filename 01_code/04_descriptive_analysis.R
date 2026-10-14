@@ -29,7 +29,7 @@ dist_pobreza <- train %>%
 
 
 # Titularlo en la diapositiva: Classes show unbalance
-ggplot(train, aes(x = factor(Pobre))) +
+distribucion_clase <- ggplot(train, aes(x = factor(Pobre))) +
   geom_bar(aes(y = percent(after_stat(count / sum(count)))),
            fill = "steelblue",
            width = 0.5) +
@@ -39,6 +39,13 @@ ggplot(train, aes(x = factor(Pobre))) +
     y = "Proportion of households by class"
   ) +
   theme_minimal()
+
+ggsave(
+  "02_outputs/figures/distribucion_clase.pdf",
+  plot =  distribucion_clase,
+  width = 7,
+  height = 4
+)
 
 ########## ¿cÓMO SERÍA UN CLASIFICADOR QUE ASIGNARA TODOS A NO POBRES?
 
@@ -62,6 +69,19 @@ accuracy <- (TP + TN) / (TP + TN + FP + FN)
 precision <- ifelse(TP + FP == 0, 0, TP / (TP + FP))
 sensibilidad <- ifelse(TP + FN == 0, NA_real_, TP / (TP + FN))
 especificidad <- ifelse(TN + FP == 0, NA_real_, TN / (TN + FP))
+
+### Volvemos estas métricas exportables a latex
+valor <- function(m) {
+  sprintf("%.2f", 100 * metricas$Valor[metricas$Metrica == m])
+}
+
+lineas <- c(
+  paste0("\\def\\accBase{", valor("Accuracy"), "\\%}"),
+  paste0("\\def\\f1Base{", valor("F1-score"), "\\%}"),
+  paste0("\\def\\sensBase{", valor("Sensibilidad"), "\\%}"),
+  paste0("\\def\\espBase{", valor("Especificidad"), "\\%}")
+)
+writeLines(lineas, "04_slides/metricas_baseline.tex")
 
 F1 <- ifelse(
   precision + sensibilidad == 0,
@@ -97,7 +117,7 @@ balance <- data.frame(
 )
 
 # Gráfico (DIFERENCIAS MAYORES A 0.1 SON CONSIDERABLES (NO HAY EN ESTAS Xs))
-ggplot(balance, aes(x = reorder(Variable, abs(SMD)),
+SMD <- ggplot(balance, aes(x = reorder(Variable, abs(SMD)),
                     y = abs(SMD))) +
   geom_col(fill = "steelblue", width = 0.5) +
   coord_flip() +
@@ -106,6 +126,14 @@ ggplot(balance, aes(x = reorder(Variable, abs(SMD)),
     y = "Standardized mean differences (SMD)"
   ) +
   theme_minimal()
+
+ggsave(
+  "02_outputs/figures/SMD.pdf",
+  plot =  SMD,
+  width = 7,
+  height = 4
+)
+
 
 ########## Variación de Bogotá: Cómo cambia la prueba de balance?
 
@@ -119,7 +147,7 @@ balance_graf <- balance %>%
   )
 
 # Gráfico de barras
-ggplot(balance_graf, aes(
+comparacion_bogota <- ggplot(balance_graf, aes(
   x = reorder(Variable, SMD),
   y = SMD,
   fill = Grupo
@@ -135,7 +163,6 @@ ggplot(balance_graf, aes(
     labels = c("Con Bogotá", "Sin Bogotá")
   ) +
   labs(
-    title = "Balance de Train frente a Test",
     subtitle = "Comparación con y sin Bogotá",
     x = NULL,
     y = "Diferencia estandarizada absoluta (SMD)",
@@ -144,3 +171,9 @@ ggplot(balance_graf, aes(
   theme_minimal() +
   theme(legend.position = "bottom")
 
+ggsave(
+  "02_outputs/figures/comparacion_Bogota.pdf",
+  plot = comparacion_bogota,
+  width = 7,
+  height = 4
+)
