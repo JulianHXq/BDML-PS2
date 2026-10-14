@@ -70,19 +70,6 @@ precision <- ifelse(TP + FP == 0, 0, TP / (TP + FP))
 sensibilidad <- ifelse(TP + FN == 0, NA_real_, TP / (TP + FN))
 especificidad <- ifelse(TN + FP == 0, NA_real_, TN / (TN + FP))
 
-### Volvemos estas métricas exportables a latex
-valor <- function(m) {
-  sprintf("%.2f", 100 * metricas$Valor[metricas$Metrica == m])
-}
-
-lineas <- c(
-  paste0("\\def\\accBase{", valor("Accuracy"), "\\%}"),
-  paste0("\\def\\f1Base{", valor("F1-score"), "\\%}"),
-  paste0("\\def\\sensBase{", valor("Sensibilidad"), "\\%}"),
-  paste0("\\def\\espBase{", valor("Especificidad"), "\\%}")
-)
-writeLines(lineas, "04_slides/metricas_baseline.tex")
-
 F1 <- ifelse(
   precision + sensibilidad == 0,
   0,
@@ -95,6 +82,19 @@ metricas <- data.frame(
 )
 
 metricas
+
+### Volvemos estas métricas exportables a latex
+valor <- function(m) {
+  sprintf("%.2f", 100 * metricas$Valor[metricas$Metrica == m])
+}
+
+lineas <- c(
+  paste0("\\def\\accBase{", valor("Accuracy"), "\\%}"),
+  paste0("\\def\\f1Base{", valor("F1-score"), "\\%}"),
+  paste0("\\def\\sensBase{", valor("Sensibilidad"), "\\%}"),
+  paste0("\\def\\espBase{", valor("Especificidad"), "\\%}")
+)
+writeLines(lineas, "04_slides/metricas_baseline.tex")
 
 ###### DIFERENCIA DE MEDIAS ESTANDARIZADAS
 
@@ -136,7 +136,22 @@ ggsave(
 
 
 ########## Variación de Bogotá: Cómo cambia la prueba de balance?
+train_sin <- filter(train, cat_ubicacion != "BOGOTA")
 
+# Calcular SMD
+smd <- function(x, y) {
+  abs(mean(x, na.rm = TRUE) - mean(y, na.rm = TRUE)) /
+    sqrt((var(x, na.rm = TRUE) + var(y, na.rm = TRUE)) / 2)
+}
+
+# Comparación con y sin Bogotá
+balance <- data.frame(
+  Variable = vars,
+  Con_Bogota = sapply(vars, function(v)
+    smd(train[[v]], test[[v]])),
+  Sin_Bogota = sapply(vars, function(v)
+    smd(train_sin[[v]], test[[v]]))
+)
 
 # Pasar los datos a formato largo
 balance_graf <- balance %>%
@@ -177,3 +192,12 @@ ggsave(
   width = 7,
   height = 4
 )
+
+rm(list = ls()[!sapply(mget(ls()), is.function)])
+rm(smd, valor)
+## NOTAS PARA CUANDO VUELVA:
+# SLIDES AUN NO SE COMPILA DESDE RUNDIRECTORY.
+# CON CHAT GPT QUEDAMOS EN COMO PODÍAMOS BORRAR ESOS FILES AUXILIARES.
+# BORREMOS VARIABLES AL FINAL DE 04_DESCRIPTIVE ANALYSIS
+# Revisar limpieza de datos como fue bien.
+#
