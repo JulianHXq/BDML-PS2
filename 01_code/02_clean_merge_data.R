@@ -11,7 +11,7 @@
 
 # Paquetes y funciones -----------------------------------------------------
 if (!require(pacman)) install.packages("pacman")
-pacman::p_load(tidyverse, scales, rio, tidymodels, ggplot2,dplyr)
+pacman::p_load(tidyverse, scales, rio, tidymodels, ggplot2,dplyr,tidyr)
 
 
 
