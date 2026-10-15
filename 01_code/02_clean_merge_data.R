@@ -11,9 +11,9 @@
 
 # Paquetes y funciones -----------------------------------------------------
 if (!require(pacman)) install.packages("pacman")
-pacman::p_load(tidyverse, scales, rio, tidymodels, ggplot2,dplyr,tidyr)
+pacman::p_load(tidyverse, scales, rio, tidymodels, ggplot2,dplyr,tidyr,tinytex)
 
-
+message("Necessary packages succesfully loaded")
 
 source("01_code/functions/fun_preprocess_personas.R")
 source("01_code/functions/fun_colapse_personas.R")
@@ -88,6 +88,7 @@ dir.create("03_temp", showWarnings = FALSE)
 saveRDS(db_train, "03_temp/train_clean.rds")
 saveRDS(db_test, "03_temp/test_clean.rds")
 message("Bases guardadas en 03_temp/train_clean.rds y 03_temp/test_clean.rds.")
+
 
 # Se liberan los objetos de este script: las bases de personas ocupan cientos
 # de MB y los scripts siguientes leen las bases limpias desde 03_temp/.

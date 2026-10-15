@@ -70,3 +70,6 @@ source("01_code/14_best_model_analysis.R")
 
 # Etapa 4: implicaciones de política.
 source("01_code/15_policy_analysis.R")
+
+# Compilación de las slides.
+source("04_slides/compile_slides.R")
