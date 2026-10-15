@@ -87,6 +87,7 @@ saveRDS(db_train, "03_temp/train_clean.rds")
 saveRDS(db_test, "03_temp/test_clean.rds")
 message("Bases guardadas en 03_temp/train_clean.rds y 03_temp/test_clean.rds.")
 
+
 # Se liberan los objetos de este script: las bases de personas ocupan cientos
 # de MB y los scripts siguientes leen las bases limpias desde 03_temp/.
 rm(db_train_hogares, db_train_personas, db_test_hogares, db_test_personas,
