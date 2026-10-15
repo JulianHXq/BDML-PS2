@@ -11,9 +11,7 @@
 
 # Paquetes y funciones -----------------------------------------------------
 if (!require(pacman)) install.packages("pacman")
-pacman::p_load(tidyverse, scales, rio, tidymodels, ggplot2,dplyr,tidyr,tinytex)
-
-message("Necessary packages succesfully loaded")
+pacman::p_load(tidyverse)
 
 source("01_code/functions/fun_preprocess_personas.R")
 source("01_code/functions/fun_colapse_personas.R")

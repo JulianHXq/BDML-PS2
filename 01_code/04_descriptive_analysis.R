@@ -5,21 +5,27 @@
 # de clases y relación con los predictores candidatos.
 #
 # Etapa del Problem Set: Etapa 1: Understanding the Data.
-# Insumos:  03_temp/train_clean.rds.
+# Insumos:  03_temp/train_clean.rds y 03_temp/test_clean.rds.
 # Salidas:  02_outputs/figures/ y 02_outputs/tables/.
 ##########################################################
 
-# Código pendiente.
+# Paquetes ------------------------------------------------------------------
+# Este script carga sus propios paquetes para poder correrse solo, una vez
+# corrido 02_clean_merge_data.R.
+if (!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse, scales)
 
 train <- readRDS("03_temp/train_clean.rds")
 test <- readRDS("03_temp/test_clean.rds")
 
-################## DISTRIBUCION DE LAS CLASES (POBRE Y NO POBRE DENTRO DE LA MEUSTRA)
+################## DISTRIBUCION DE LAS CLASES (POBRE Y NO POBRE DENTRO DE LA MUESTRA)
 
+# Pobre es un factor con niveles "Yes" (pobre) y "No" (no pobre).
 dist_pobreza <- train %>%
   count(Pobre) %>%
   mutate(
-    categoria = if_else(Pobre == 1, "Pobre", "No pobre"),
+    categoria = factor(if_else(Pobre == "Yes", "Poor", "Not Poor"),
+                       levels = c("Poor", "Not Poor")),
     proporcion = n / sum(n),
     etiqueta = paste0(
       percent(proporcion, accuracy = 0.1),
@@ -27,13 +33,14 @@ dist_pobreza <- train %>%
     )
   )
 
-
 # Titularlo en la diapositiva: Classes show unbalance
-distribucion_clase <- ggplot(train, aes(x = factor(Pobre))) +
-  geom_bar(aes(y = percent(after_stat(count / sum(count)))),
-           fill = "steelblue",
-           width = 0.5) +
-  scale_x_discrete(labels = c("Poor", "Not Poor")) +
+# El eje y debe ser numérico: el formato de porcentaje se aplica solo a las
+# etiquetas del eje, para que la altura de las barras sea proporcional.
+distribucion_clase <- ggplot(dist_pobreza, aes(x = categoria, y = proporcion)) +
+  geom_col(fill = "steelblue", width = 0.5) +
+  geom_text(aes(label = etiqueta), vjust = -0.5, size = 3.5) +
+  scale_y_continuous(labels = percent, limits = c(0, 1),
+                     expand = expansion(mult = c(0, 0.05))) +
   labs(
     x = NULL,
     y = "Proportion of households by class"
@@ -47,22 +54,16 @@ ggsave(
   height = 4
 )
 
-########## ¿cÓMO SERÍA UN CLASIFICADOR QUE ASIGNARA TODOS A NO POBRES?
-
-#REVISAR BIEN MAÑANA POQRQUE CREO Q LAS CLASES ESTÁN INVERTIDAS
+########## ¿CÓMO SERÍA UN CLASIFICADOR QUE ASIGNARA TODOS A NO POBRES?
 
 # Clasificador ingenuo: todos son NO POBRES
-real <- as.data.frame(train$Pobre)
-real <- real %>% 
-  rename(observed = "train$Pobre")
-real <- mutate(real, pred = "No")
+real <- data.frame(observed = train$Pobre, pred = "No")
 
-# Matriz de confusión
-
-TP <- sum(real$obs == "Yes" & real$pred == "Yes")
-TN <- sum(real$obs == "No" & real$pred == "No")
-FP <- sum(real$obs == "No" & real$pred == "Yes")
-FN <- sum(real$obs == "Yes" & real$pred == "No")
+# Matriz de confusión (la clase positiva es "Yes", pobre)
+TP <- sum(real$observed == "Yes" & real$pred == "Yes")
+TN <- sum(real$observed == "No" & real$pred == "No")
+FP <- sum(real$observed == "No" & real$pred == "Yes")
+FN <- sum(real$observed == "Yes" & real$pred == "No")
 
 # Métricas
 accuracy <- (TP + TN) / (TP + TN + FP + FN)
@@ -94,7 +95,7 @@ lineas <- c(
   paste0("\\def\\sensBase{", valor("Sensibilidad"), "\\%}"),
   paste0("\\def\\espBase{", valor("Especificidad"), "\\%}")
 )
-writeLines(lineas, "04_slides/metricas_baseline.tex")
+writeLines(lineas, "02_outputs/tables/metricas_baseline.tex")
 
 ###### DIFERENCIA DE MEDIAS ESTANDARIZADAS
 
@@ -118,7 +119,7 @@ balance <- data.frame(
 
 # Gráfico (DIFERENCIAS MAYORES A 0.1 SON CONSIDERABLES (NO HAY EN ESTAS Xs))
 SMD <- ggplot(balance, aes(x = reorder(Variable, abs(SMD)),
-                    y = abs(SMD))) +
+                           y = abs(SMD))) +
   geom_col(fill = "steelblue", width = 0.5) +
   coord_flip() +
   labs(
@@ -193,11 +194,6 @@ ggsave(
   height = 4
 )
 
+# Se liberan los objetos de este script (se conservan las funciones).
 rm(list = ls()[!sapply(mget(ls()), is.function)])
 rm(smd, valor)
-## NOTAS PARA CUANDO VUELVA:
-# SLIDES AUN NO SE COMPILA DESDE RUNDIRECTORY.
-# CON CHAT GPT QUEDAMOS EN COMO PODÍAMOS BORRAR ESOS FILES AUXILIARES.
-# BORREMOS VARIABLES AL FINAL DE 04_DESCRIPTIVE ANALYSIS
-# Revisar limpieza de datos como fue bien.
-#
