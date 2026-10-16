@@ -25,8 +25,12 @@ fun_colapse_personas <- function(.db) {
   #' \code{cat_maxEduc}; y, solo para la unidad de gasto, el número de
   #' personas, \code{num_personas_ug}, de ocupados, \code{num_ocupados}, y de
   #' cotizantes a pensión, \code{num_cotizantes}; la proporción de ocupados,
-  #' \code{prop_ocupados}; y si alguien recibe pensión,
-  #' \code{bin_hogar_pensionado}.
+  #' \code{prop_ocupados}; si alguien recibe pensión,
+  #' \code{bin_hogar_pensionado}; las horas trabajadas a la semana,
+  #' \code{num_horas_ug}; el número de asalariados, \code{num_asalariados},
+  #' y de trabajadores por cuenta propia, \code{num_cuentapropia}; la
+  #' posición ocupacional del jefe, \code{cat_pos_jefe}; y el nivel educativo
+  #' promedio del jefe y su cónyuge, \code{num_educ_jefe_conyuge}.
   
   db_result <- .db |>
     group_by(id) |>
@@ -41,7 +45,24 @@ fun_colapse_personas <- function(.db) {
               num_personas_ug = sum(bin_ug, na.rm = TRUE),
               num_ocupados = sum(bin_occup * bin_ug, na.rm = TRUE),
               num_cotizantes = sum(bin_cotiza * bin_ug, na.rm = TRUE),
-              bin_hogar_pensionado = max(bin_pensionado * bin_ug, na.rm = TRUE)) |>
+              bin_hogar_pensionado = max(bin_pensionado * bin_ug, na.rm = TRUE),
+              # Calidad del trabajo: cuánto se trabaja y en qué posición. Se
+              # suman solo los miembros de la unidad de gasto, como en las
+              # demás variables laborales.
+              num_horas_ug = sum(num_horas * bin_ug, na.rm = TRUE),
+              num_asalariados = sum(bin_asalariado * bin_ug, na.rm = TRUE),
+              num_cuentapropia = sum(bin_cuentapropia * bin_ug, na.rm = TRUE),
+              # Posición ocupacional del jefe. Cada hogar tiene exactamente un
+              # jefe (verificado en train y en test), así que siempre hay un
+              # único valor.
+              cat_pos_jefe = cat_posicion[bin_head == 1],
+              # Nivel educativo promedio del jefe y su cónyuge, si lo hay, con
+              # el código de 1 (ninguno) a 6 (universitaria). Son los
+              # principales generadores de ingreso del hogar. Como todo hogar
+              # tiene jefe, la misma regla sirve para todos y nunca queda
+              # vacía.
+              num_educ_jefe_conyuge = mean(as.integer(
+                cat_educ[bin_head == 1 | bin_conyuge == 1]))) |>
     mutate(
       # Tasa de dependencia: dependientes (menores de 18 y mayores de 65) por
       # cada persona en edad de trabajar (18 a 65), que son quienes pueden
@@ -68,7 +89,9 @@ fun_colapse_personas <- function(.db) {
     select(id, bin_head_male, num_minors, num_old, num_inactivos,
            num_edad_trabajar, prop_dependencia, prop_inactividad,
            cat_maxEduc, num_personas_ug, num_ocupados, prop_ocupados,
-           num_cotizantes, bin_hogar_pensionado) |>
+           num_cotizantes, bin_hogar_pensionado, num_horas_ug,
+           num_asalariados, num_cuentapropia, cat_pos_jefe,
+           num_educ_jefe_conyuge) |>
     ungroup()
   
   return(db_result)
