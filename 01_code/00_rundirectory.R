@@ -40,7 +40,7 @@ source("01_code/01_get_data.R")
 # Limpia personas y hogares, construye variables a nivel hogar y las une.
 source("01_code/02_clean_merge_data.R")
 
-# Define los conjuntos de predictores comunes a todos los modelos.
+# Define los conjuntos de predictores, anidados por bloques económicos.
 source("01_code/03_build_features.R")
 
 # Etapa 1: desbalance de clases y relación con los predictores.

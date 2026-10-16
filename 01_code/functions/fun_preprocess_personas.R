@@ -17,13 +17,16 @@ fun_preprocess_personas <- function(.db) {
   #'
   #' @returns \code{tibble}. Una fila por persona con el id del hogar, \code{id},
   #' el id de la persona dentro del hogar, \code{id_persona}, y los indicadores:
-  #' hombre, \code{bin_male}; jefe del hogar, \code{bin_head}; ocupado,
-  #' \code{bin_occup}; inactivo, \code{bin_inactivo}; en edad de trabajar,
-  #' \code{bin_edad_trabajar}; menor de edad, \code{bin_minor}; mayor de 65,
-  #' \code{bin_old}; su máximo nivel educativo, \code{cat_educ}; si pertenece
-  #' a la unidad de gasto, \code{bin_ug}; si cotiza a pensión,
-  #' \code{bin_cotiza}; y si recibió pensión el mes pasado,
-  #' \code{bin_pensionado}.
+  #' hombre, \code{bin_male}; jefe del hogar, \code{bin_head}; cónyuge del
+  #' jefe, \code{bin_conyuge}; ocupado, \code{bin_occup}; inactivo,
+  #' \code{bin_inactivo}; en edad de trabajar, \code{bin_edad_trabajar}; menor
+  #' de edad, \code{bin_minor}; mayor de 65, \code{bin_old}; su máximo nivel
+  #' educativo, \code{cat_educ}; si pertenece a la unidad de gasto,
+  #' \code{bin_ug}; si cotiza a pensión, \code{bin_cotiza}; si recibió pensión
+  #' el mes pasado, \code{bin_pensionado}; su posición ocupacional,
+  #' \code{cat_posicion}; si es asalariado, \code{bin_asalariado}; si trabaja
+  #' por cuenta propia, \code{bin_cuentapropia}; y las horas que trabaja a la
+  #' semana, \code{num_horas}.
   
   # Variables que usamos y sus nombres descriptivos. Todas existen tanto en
   # train como en test.
@@ -31,15 +34,17 @@ fun_preprocess_personas <- function(.db) {
                  'cat_gender' = 'P6020', 'bin_employed' = 'Oc',
                  'bin_inactivo' = 'Ina', 'cat_educ' = 'P6210',
                  'cat_relationship' = 'P6050',
-                 'cat_cotiza' = 'P6920', 'cat_recibe_pension' = 'P7500s2')
+                 'cat_cotiza' = 'P6920', 'cat_recibe_pension' = 'P7500s2',
+                 'cat_posicion' = 'P6430', 'num_horas' = 'P6800')
   
   db_result <- .db |>
     select(all_of(text_vars)) |>
     mutate(
       # P6020: 1 = hombre, 2 = mujer.
       bin_male = ifelse(test = cat_gender == 1, yes = 1, no = 0),
-      # P6050: 1 = jefe(a) del hogar.
+      # P6050: 1 = jefe(a) del hogar; 2 = pareja, esposo(a), cónyuge.
       bin_head = ifelse(test = cat_relationship == 1, yes = 1, no = 0),
+      bin_conyuge = ifelse(test = cat_relationship == 2, yes = 1, no = 0),
       # Oc e Ina valen 1 (sí) o NA (no), según el diccionario del DANE.
       bin_occup = ifelse(test = is.na(bin_employed), yes = 0, no = 1),
       bin_inactivo = ifelse(test = is.na(bin_inactivo), yes = 0, no = 1),
@@ -73,11 +78,41 @@ fun_preprocess_personas <- function(.db) {
       # 1 = sí, 2 = no, 9 = no sabe. Solo se pregunta a quien respondió "sí"
       # en P7495 (¿recibió pagos por arriendos y/o pensiones?): NA significa
       # que no recibió pensión. "No sabe" (9) se trata como no.
-      bin_pensionado = ifelse(test = cat_recibe_pension %in% 1, yes = 1, no = 0)
+      bin_pensionado = ifelse(test = cat_recibe_pension %in% 1, yes = 1, no = 0),
+      # P6430: posición ocupacional en el trabajo principal. 1 = obrero o
+      # empleado de empresa particular, 2 = obrero o empleado del gobierno,
+      # 3 = empleado doméstico, 4 = cuenta propia, 5 = patrón o empleador,
+      # 6 = trabajador familiar sin remuneración, 7 = trabajador sin
+      # remuneración en empresas de otros hogares, 8 = jornalero o peón,
+      # 9 = otro. Solo se pregunta a los ocupados: NA significa que la
+      # persona no trabaja.
+      # Asalariados: trabajan para un empleador, privado o público (1 y 2).
+      bin_asalariado = ifelse(test = cat_posicion %in% c(1, 2), yes = 1, no = 0),
+      # Cuenta propia: trabajan por su cuenta, sin empleador ni empleados (4).
+      bin_cuentapropia = ifelse(test = cat_posicion %in% 4, yes = 1, no = 0),
+      # Como factor: NA pasa a "No ocupado", y 6 y 7 se unen en "Sin
+      # remuneracion", porque ambos describen trabajo sin pago y el 7 es muy
+      # poco frecuente. Los indicadores de arriba se crean antes de este
+      # cambio, a partir del código original.
+      cat_posicion = case_when(is.na(cat_posicion) ~ 0,
+                               cat_posicion == 7 ~ 6,
+                               TRUE ~ cat_posicion),
+      cat_posicion = factor(x = cat_posicion,
+                            levels = c(0, 1, 2, 3, 4, 5, 6, 8, 9),
+                            labels = c("No ocupado", "Empleado particular",
+                                       "Empleado gobierno",
+                                       "Empleado domestico", "Cuenta propia",
+                                       "Patron", "Sin remuneracion",
+                                       "Jornalero", "Otro")),
+      # P6800: horas que trabaja normalmente a la semana en el trabajo
+      # principal. Solo se pregunta a los ocupados: NA significa que la
+      # persona no trabaja, es decir, 0 horas.
+      num_horas = replace_na(num_horas, 0)
     ) |>
-    select(id, id_persona, bin_male, bin_head, bin_occup, bin_inactivo,
-           bin_edad_trabajar, cat_educ, bin_minor, bin_old,
-           bin_ug, bin_cotiza, bin_pensionado)
+    select(id, id_persona, bin_male, bin_head, bin_conyuge, bin_occup,
+           bin_inactivo, bin_edad_trabajar, cat_educ, bin_minor, bin_old,
+           bin_ug, bin_cotiza, bin_pensionado, cat_posicion, bin_asalariado,
+           bin_cuentapropia, num_horas)
   
   return(db_result)
 }

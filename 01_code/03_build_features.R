@@ -13,7 +13,71 @@
 #
 # Etapa del Problem Set: Etapa 1 y base de la Etapa 2.
 # Insumos:  03_temp/train_clean.rds y 03_temp/test_clean.rds.
-# Salidas:  03_temp/ con las bases de modelación y los conjuntos de variables.
+# Salidas:  03_temp/predictores.rds.
 ##########################################################
 
-# Código pendiente.
+# Paquetes ------------------------------------------------------------------
+if (!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse)
+
+train <- readRDS("03_temp/train_clean.rds")
+test  <- readRDS("03_temp/test_clean.rds")
+
+# Conjuntos anidados por bloques ------------------------------------------
+# Cada conjunto contiene al anterior y le agrega un bloque de variables con
+# una razón económica común. Los bloques van de lo más barato y fácil de
+# verificar en una visita al hogar (ubicación, vivienda, tamaño) a lo más
+# costoso, que depende de lo que el hogar declara (horas, cotización). Así se
+# puede medir cuánto se pierde en predicción con una encuesta más corta.
+
+# Bloque 1. Ubicación, vivienda y tamaño del hogar: observables en una visita
+# corta.
+X_1_vivienda <- c("cat_ubicacion", "cat_tenencia", "num_personas_cuarto",
+                  "num_personas_ug", "num_minors")
+
+# Bloque 2. Composición del hogar y capital humano: cuántos dependen de
+# quienes pueden trabajar, y qué educación tienen.
+X_2_demografia <- c(X_1_vivienda,
+                    "bin_head_male", "num_old", "num_edad_trabajar",
+                    "prop_dependencia", "cat_maxEduc",
+                    "num_educ_jefe_conyuge")
+
+# Bloque 3. Empleo: cuántos miembros trabajan y cuántos están inactivos.
+X_3_empleo <- c(X_2_demografia,
+                "num_ocupados", "prop_ocupados", "num_inactivos",
+                "prop_inactividad")
+
+# Bloque 4. Calidad del empleo y formalidad: cuánto y cómo se trabaja, y si
+# hay cotización o pensión. Con este bloque están los 21 predictores.
+X_4_completo <- c(X_3_empleo,
+                  "num_cotizantes", "bin_hogar_pensionado", "num_horas_ug",
+                  "num_asalariados", "num_cuentapropia", "cat_pos_jefe")
+
+predictores <- list(X_1_vivienda   = X_1_vivienda,
+                    X_2_demografia = X_2_demografia,
+                    X_3_empleo     = X_3_empleo,
+                    X_4_completo   = X_4_completo)
+
+# Verificaciones -----------------------------------------------------------
+# El conjunto completo debe tener exactamente los predictores de las bases:
+# si se agrega o quita una variable en la limpieza y no se actualiza aquí,
+# el script se detiene en lugar de dejar un conjunto incompleto.
+if (!setequal(X_4_completo, setdiff(names(train), "Pobre")) ||
+    !setequal(X_4_completo, setdiff(names(test), "id"))) {
+  stop("X_4_completo no coincide con los predictores de train y test.",
+       call. = FALSE)
+}
+# Ningún conjunto debe repetir variables.
+if (any(sapply(predictores, anyDuplicated) > 0)) {
+  stop("Hay variables repetidas en algún conjunto.", call. = FALSE)
+}
+
+message("Conjuntos de predictores: ",
+        paste0(names(predictores), " (", lengths(predictores), ")",
+               collapse = ", "), ".")
+
+# Guardar ------------------------------------------------------------------
+saveRDS(predictores, "03_temp/predictores.rds")
+
+rm(train, test, X_1_vivienda, X_2_demografia, X_3_empleo, X_4_completo,
+   predictores)
