@@ -63,8 +63,8 @@ El script `02_clean_merge_data.R` limpia las bases de personas, las resume a niv
 
 | Base | Hogares | Columnas |
 |:--|--:|:--|
-| `03_temp/train_clean.rds` | 164.960 | `Pobre` y 16 predictores |
-| `03_temp/test_clean.rds` | 66.168 | `id` y 16 predictores |
+| `03_temp/train_clean.rds` | 164.960 | `Pobre` y 21 predictores |
+| `03_temp/test_clean.rds` | 66.168 | `id` y 21 predictores |
 
 Ninguna de las dos tiene valores faltantes. El `id` se elimina de la base de entrenamiento para que ningún modelo lo use como predictor, y se conserva en la de prueba porque es la llave del archivo de Kaggle.
 
@@ -90,8 +90,13 @@ Ninguna de las dos tiene valores faltantes. El `id` se elimina de la base de ent
 | `prop_inactividad` | Número | Inactivos / personas de 18 a 65 años | `Ina` |
 | `num_cotizantes` | Número | Personas de la unidad de gasto que cotizan a pensión | `P6920` |
 | `bin_hogar_pensionado` | 0/1 | Alguien de la unidad de gasto recibió pensión el mes pasado | `P7500s2` |
+| `num_horas_ug` | Número | Horas semanales que trabaja normalmente la unidad de gasto en el trabajo principal | `P6800` |
+| `num_asalariados` | Número | Obreros o empleados (particulares o del gobierno) de la unidad de gasto | `P6430` |
+| `num_cuentapropia` | Número | Trabajadores por cuenta propia de la unidad de gasto | `P6430` |
+| `cat_pos_jefe` | Factor (9) | Posición ocupacional del jefe, incluido "No ocupado" | `P6430`, `P6050` |
 | **Capital humano** | | | |
 | `cat_maxEduc` | Factor (6) | Nivel educativo más alto del hogar, de "Ninguno" a "Universitaria" | `P6210` |
+| `num_educ_jefe_conyuge` | Número | Nivel educativo promedio del jefe y su cónyuge (si lo hay), de 1 ("Ninguno") a 6 ("Universitaria") | `P6210`, `P6050` |
 
 ### Decisiones de construcción
 
@@ -101,6 +106,8 @@ Ninguna de las dos tiene valores faltantes. El `id` se elimina de la base de ent
 - **Ciudades.** La base de prueba no tiene hogares de Bogotá. Para que train y test tengan las mismas categorías, la lista de los 25 dominios se fija en la función de hogares.
 - **Educación.** Se construye como factor ordenado para tomar el máximo del hogar y luego se convierte en factor sin orden, para que cada nivel entre al modelo como su propia variable dicotómica.
 - **Tenencia de la vivienda.** Se conservan las 6 categorías porque tienen niveles de pobreza muy distintos (por ejemplo, 9,8% en "propia, la están pagando" frente a 48,3% en "posesión sin título").
+- **Calidad del trabajo.** Además de cuántos trabajan (`num_ocupados`), se mide cuánto y cómo trabajan: horas, asalariados, cuenta propia y posición del jefe. Funcionan como aproximación al ingreso laboral, que no está disponible en la base de prueba. Las preguntas de posición ocupacional (`P6430`) y horas (`P6800`) solo se hacen a los ocupados: un valor faltante significa que la persona no trabaja (0 horas, posición "No ocupado"). En la posición del jefe, los trabajadores sin remuneración (códigos 6 y 7) se unen en una sola categoría. En validación cruzada con un logit, estas variables y la educación del jefe y su cónyuge suben el F1 de 0,655 a 0,681.
+- **Educación del jefe y su cónyuge.** Se promedia el nivel educativo de los principales generadores de ingreso del hogar. Como todo hogar tiene exactamente un jefe, la misma regla aplica a todos y la variable nunca queda vacía. Se prefirió frente al promedio de los mayores de 18, que no existe en hogares sin adultos y obligaría a usar una regla distinta para ellos.
 
 ## Estructura del código
 
