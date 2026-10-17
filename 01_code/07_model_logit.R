@@ -131,6 +131,5 @@ fun_logit_variante <- function(.nombre_conjunto) {
 }
 
 # Variantes ---------------------------------------------------------------
-# Primer envío: el conjunto completo, la referencia que deben superar los
-# demás modelos.
+# Primer envío: el conjunto completo.
 logit_X4 <- fun_logit_variante("X_4_completo")

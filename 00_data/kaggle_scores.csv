@@ -1,1 +1,2 @@
 archivo,algoritmo,puntaje_publico,fecha_envio,integrante,descripcion
+logit_X_4_completo_umbral_0_33,Logit,0.68,2026-10-17,Valentina Vera,Logit completo con 21 predictores; umbral 0.33 que maximiza F1 en CV
