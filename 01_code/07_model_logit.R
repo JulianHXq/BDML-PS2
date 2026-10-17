@@ -133,3 +133,8 @@ fun_logit_variante <- function(.nombre_conjunto) {
 # Variantes ---------------------------------------------------------------
 # Primer envío: el conjunto completo.
 logit_X4 <- fun_logit_variante("X_4_completo")
+
+# Escalera de conjuntos: cuánto F1 se pierde con una encuesta más corta.
+logit_X1 <- fun_logit_variante("X_1_vivienda")
+logit_X2 <- fun_logit_variante("X_2_demografia")
+logit_X3 <- fun_logit_variante("X_3_empleo")
