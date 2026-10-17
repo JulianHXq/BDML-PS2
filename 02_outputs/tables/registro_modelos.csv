@@ -1,0 +1,2 @@
+"archivo","algoritmo","conjunto","n_predictores","hiperparametros","umbral","f1_cv","precision_cv","recall_cv","auc_cv","fecha"
+"logit_X_4_completo_umbral_0_33","Logit","X_4_completo",21,"ninguno",0.333333333333333,0.679996627697842,0.634359270134228,0.732709544573643,0.917678676967534,"2026-10-17"
