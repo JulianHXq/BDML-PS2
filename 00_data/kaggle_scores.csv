@@ -1,1 +1,5 @@
 archivo,algoritmo,puntaje_publico,fecha_envio,integrante,descripcion
+logit_X_4_completo_umbral_0_33,Logit,0.68,2026-10-17,Valentina Vera,Logit completo con 21 predictores; umbral 0.33 que maximiza F1 en CV
+logit_X_1_vivienda_umbral_0_25,Logit,0.53,2026-10-17,Valentina Vera,Logit con predictores de vivienda; umbral 0.25 que maximiza F1 en CV
+logit_X_2_demografia_umbral_0_26,Logit,0.56,2026-10-17,Valentina Vera,Logit con predictores demográficos; umbral 0.26 que maximiza F1 en CV
+logit_X_3_empleo_umbral_0_29,Logit,0.61,2026-10-17,Valentina Vera,Logit con predictores de empleo; umbral 0.29 que maximiza F1 en CV
