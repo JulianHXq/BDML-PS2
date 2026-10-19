@@ -35,7 +35,11 @@ fun_preprocess_personas <- function(.db) {
                  'bin_inactivo' = 'Ina', 'cat_educ' = 'P6210',
                  'cat_relationship' = 'P6050',
                  'cat_cotiza' = 'P6920', 'cat_recibe_pension' = 'P7500s2',
-                 'cat_posicion' = 'P6430', 'num_horas' = 'P6800')
+                 'cat_posicion' = 'P6430', 'num_horas' = 'P6800',
+                 # Nuevas fuentes, presentes en train y test de personas.
+                 'bin_des' = 'Des', 'cat_actividad' = 'P6240',
+                 'cat_salud_afiliacion' = 'P6090',
+                 'cat_salud_regimen' = 'P6100')
   
   db_result <- .db |>
     select(all_of(text_vars)) |>
@@ -107,12 +111,33 @@ fun_preprocess_personas <- function(.db) {
       # P6800: horas que trabaja normalmente a la semana en el trabajo
       # principal. Solo se pregunta a los ocupados: NA significa que la
       # persona no trabaja, es decir, 0 horas.
-      num_horas = replace_na(num_horas, 0)
+      num_horas = replace_na(num_horas, 0),
+      # PREDICTORES NUEVOS: solo añadidos; ningún indicador previo cambia.
+      # La edad original se conserva para la agregación posterior.
+      bin_female = as.integer(cat_gender == 2),
+      bin_menor_6 = as.integer(num_age < 6),
+      bin_adulto_universitario = as.integer(
+        num_age >= 18 & cat_educ == "Universitaria"),
+      # Des = 1 si está desocupado; NA para los demás.
+      bin_desocupado = as.integer(bin_des %in% 1),
+      # P6240 = 3: estudió la mayor parte del tiempo la semana anterior.
+      bin_estudiante = as.integer(cat_actividad %in% 3),
+      # P6090 = 2: declara no estar afiliado al sistema de salud.
+      bin_no_afiliado_salud = as.integer(cat_salud_afiliacion %in% 2),
+      # P6100 = 1 contributivo, 3 subsidiado; un NA no se confunde
+      # con una declaración positiva de afiliación.
+      bin_regimen_contributivo = as.integer(cat_salud_regimen %in% 1),
+      bin_regimen_subsidiado = as.integer(cat_salud_regimen %in% 3)
     ) |>
     select(id, id_persona, bin_male, bin_head, bin_conyuge, bin_occup,
            bin_inactivo, bin_edad_trabajar, cat_educ, bin_minor, bin_old,
            bin_ug, bin_cotiza, bin_pensionado, cat_posicion, bin_asalariado,
-           bin_cuentapropia, num_horas)
+           bin_cuentapropia, num_horas,
+           # Variables auxiliares nuevas para agregación al hogar.
+           num_age, bin_female, bin_menor_6,
+           bin_adulto_universitario, bin_desocupado, bin_estudiante,
+           bin_no_afiliado_salud, bin_regimen_contributivo,
+           bin_regimen_subsidiado)
   
   return(db_result)
 }
