@@ -27,3 +27,12 @@
 
 # Variante 1 --------------------------------------------------------------
 # Código pendiente.
+set.seed(2026)
+
+train       <- readRDS("03_temp/train_clean.rds")
+test        <- readRDS("03_temp/test_clean.rds")
+predictores <- readRDS("03_temp/predictores.rds")
+cv_folds    <- readRDS("03_temp/cv_folds.rds")
+
+
+

@@ -60,7 +60,18 @@ fun_preprocess_hogares <- function(.db) {
       # garajes. Según el diccionario, incluye los cuartos de pensionistas y
       # empleados domésticos internos; por eso el numerador es Nper (todas
       # las personas que viven en el hogar) y no solo la unidad de gasto.
-      num_personas_cuarto = Nper / P5000
+      num_personas_cuarto = Nper / P5000,
+      # PREDICTORES NUEVOS. Se conservan Nper y P5000 además de su razón:
+      # el número de personas y cuartos puede aportar información adicional.
+      num_personas_hogar = Nper,
+      num_cuartos = P5000,
+      # P5130: arriendo hipotético, observado principalmente para viviendas
+      # no arrendadas; NA y códigos 98/99 se distinguen de los reportados
+      # con un indicador. El cero es solo un valor de relleno.
+      bin_arriendo_reportado = as.integer(
+        !is.na(P5130) & !(P5130 %in% c(98, 99))),
+      num_arriendo_estimado = if_else(
+        bin_arriendo_reportado == 1L, as.numeric(P5130), 0)
     )
   
   # La variable de resultado solo existe en train.
@@ -70,10 +81,14 @@ fun_preprocess_hogares <- function(.db) {
       # trata el primer nivel del factor como la clase positiva al calcular
       # las métricas (F1, precisión, recall).
       mutate(Pobre = factor(Pobre, levels = c(1, 0), labels = c("Yes", "No"))) |>
-      select(id, cat_ubicacion, cat_tenencia, num_personas_cuarto, Pobre)
+      select(id, cat_ubicacion, cat_tenencia, num_personas_cuarto,
+             num_personas_hogar, num_cuartos,
+             num_arriendo_estimado, bin_arriendo_reportado, Pobre)
   } else {
     db_result <- db_result |>
-      select(id, cat_ubicacion, cat_tenencia, num_personas_cuarto)
+      select(id, cat_ubicacion, cat_tenencia, num_personas_cuarto,
+             num_personas_hogar, num_cuartos,
+             num_arriendo_estimado, bin_arriendo_reportado)
   }
   
   return(db_result)

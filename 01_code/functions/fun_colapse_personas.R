@@ -62,7 +62,30 @@ fun_colapse_personas <- function(.db) {
               # tiene jefe, la misma regla sirve para todos y nunca queda
               # vacía.
               num_educ_jefe_conyuge = mean(as.integer(
-                cat_educ[bin_head == 1 | bin_conyuge == 1]))) |>
+                cat_educ[bin_head == 1 | bin_conyuge == 1])),
+              # PREDICTORES NUEVOS: demografía de la unidad de gasto y jefe.
+              num_edad_jefe = num_age[bin_head == 1],
+              num_edad_promedio_ug = mean(num_age[bin_ug == 1]),
+              prop_menores_ug = sum(bin_minor * bin_ug, na.rm = TRUE) /
+                num_personas_ug,
+              prop_mujeres_ug = sum(bin_female * bin_ug, na.rm = TRUE) /
+                num_personas_ug,
+              num_menores_6_ug = sum(bin_menor_6 * bin_ug, na.rm = TRUE),
+              # Educación del jefe y adultos universitarios en la UG.
+              cat_educ_jefe = cat_educ[bin_head == 1],
+              num_adultos_universitarios_ug = sum(
+                bin_adulto_universitario * bin_ug, na.rm = TRUE),
+              # Empleo, desocupación y estudiantes en la UG.
+              bin_jefe_ocupado = bin_occup[bin_head == 1],
+              num_desocupados_ug = sum(bin_desocupado * bin_ug, na.rm = TRUE),
+              num_estudiantes_ug = sum(bin_estudiante * bin_ug, na.rm = TRUE),
+              # Salud: conteos de respuestas positivas explícitas.
+              num_regimen_subsidiado_ug = sum(
+                bin_regimen_subsidiado * bin_ug, na.rm = TRUE),
+              num_regimen_contributivo_ug = sum(
+                bin_regimen_contributivo * bin_ug, na.rm = TRUE),
+              num_no_afiliados_salud_ug = sum(
+                bin_no_afiliado_salud * bin_ug, na.rm = TRUE)) |>
     mutate(
       # Tasa de dependencia: dependientes (menores de 18 y mayores de 65) por
       # cada persona en edad de trabajar (18 a 65), que son quienes pueden
@@ -84,14 +107,33 @@ fun_colapse_personas <- function(.db) {
       # máximo del hogar. Para los modelos se convierte en factor sin orden:
       # así cada nivel entra como su propia variable dicotómica. Los niveles y su orden de
       # presentación se conservan ("Ninguno" sigue siendo la categoría base).
-      cat_maxEduc = factor(cat_maxEduc, ordered = FALSE)
+      cat_maxEduc = factor(cat_maxEduc, ordered = FALSE),
+      # PREDICTORES NUEVOS: denominadores acordes con el fenómeno medido.
+      cat_educ_jefe = factor(cat_educ_jefe, ordered = FALSE),
+      tasa_desempleo_ug = num_desocupados_ug /
+        na_if(num_ocupados + num_desocupados_ug, 0),
+      bin_sin_activos_ug = as.integer(
+        num_ocupados + num_desocupados_ug == 0),
+      tasa_desempleo_ug = replace_na(tasa_desempleo_ug, 0),
+      prop_cotizantes_ocupados_ug = num_cotizantes / na_if(num_ocupados, 0),
+      prop_cotizantes_ocupados_ug = replace_na(
+        prop_cotizantes_ocupados_ug, 0)
     ) |>
     select(id, bin_head_male, num_minors, num_old, num_inactivos,
            num_edad_trabajar, prop_dependencia, prop_inactividad,
            cat_maxEduc, num_personas_ug, num_ocupados, prop_ocupados,
            num_cotizantes, bin_hogar_pensionado, num_horas_ug,
            num_asalariados, num_cuentapropia, cat_pos_jefe,
-           num_educ_jefe_conyuge) |>
+           num_educ_jefe_conyuge,
+           # Predictores nuevos: se agregan sin retirar los existentes.
+           num_edad_jefe, num_edad_promedio_ug, prop_menores_ug,
+           prop_mujeres_ug, num_menores_6_ug,
+           cat_educ_jefe, num_adultos_universitarios_ug,
+           bin_jefe_ocupado, num_desocupados_ug, tasa_desempleo_ug,
+           bin_sin_activos_ug, num_estudiantes_ug,
+           prop_cotizantes_ocupados_ug,
+           num_regimen_subsidiado_ug, num_regimen_contributivo_ug,
+           num_no_afiliados_salud_ug) |>
     ungroup()
   
   return(db_result)
