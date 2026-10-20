@@ -53,24 +53,28 @@ X_4_completo <- c(X_3_empleo,
                   "num_cotizantes", "bin_hogar_pensionado", "num_horas_ug",
                   "num_asalariados", "num_cuentapropia", "cat_pos_jefe")
 
-#Incorporar los nuevos predictores. (Varios para elastic net).
-X_5_ampliado <- union(X_4_completo,
-  setdiff(names(train), c("id", "Pobre")))
+# Bloque 5. Conjunto extendido: X_4_completo más todas las variables
+# agregadas después (arriendo, demografía detallada, desempleo, estudiantes,
+# afiliación a salud, subempleo, formalidad y transferencias). Se define
+# como todas las columnas de la base para que incluya automáticamente
+# cualquier variable nueva de la limpieza.
+X_5_extendido <- union(X_4_completo,
+                       setdiff(names(train), c("id", "Pobre")))
 
 
 predictores <- list(X_1_vivienda   = X_1_vivienda,
                     X_2_demografia = X_2_demografia,
                     X_3_empleo     = X_3_empleo,
                     X_4_completo   = X_4_completo,
-                    X_5_ampliado   = X_5_ampliado)
+                    X_5_extendido  = X_5_extendido)
 
 # Verificaciones -----------------------------------------------------------
 # El conjunto completo debe tener exactamente los predictores de las bases:
 # si se agrega o quita una variable en la limpieza y no se actualiza aquí,
 # el script se detiene en lugar de dejar un conjunto incompleto.
-if (!setequal(X_5_ampliado, setdiff(names(train), c("id", "Pobre"))) ||
-    !setequal(X_5_ampliado, setdiff(names(test), "id"))) {
-  stop("X_5_completo no coincide con los predictores de train y test.",
+if (!setequal(X_5_extendido, setdiff(names(train), c("id", "Pobre"))) ||
+    !setequal(X_5_extendido, setdiff(names(test), "id"))) {
+  stop("X_5_extendido no coincide con los predictores de train y test.",
        call. = FALSE)
 }
 # Ningún conjunto debe repetir variables.
@@ -85,5 +89,5 @@ message("Conjuntos de predictores: ",
 # Guardar ------------------------------------------------------------------
 saveRDS(predictores, "03_temp/predictores.rds")
 
-rm(train, test, X_1_vivienda, X_2_demografia, X_3_empleo, X_4_completo, X_5_ampliado,
+rm(train, test, X_1_vivienda, X_2_demografia, X_3_empleo, X_4_completo, X_5_extendido,
    predictores)
