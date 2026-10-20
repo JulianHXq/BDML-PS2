@@ -138,3 +138,7 @@ logit_X4 <- fun_logit_variante("X_4_completo")
 logit_X1 <- fun_logit_variante("X_1_vivienda")
 logit_X2 <- fun_logit_variante("X_2_demografia")
 logit_X3 <- fun_logit_variante("X_3_empleo")
+
+# Conjunto extendido: X_4_completo más arriendo, demografía detallada,
+# desempleo y calidad del empleo.
+logit_X5 <- fun_logit_variante("X_5_extendido")
