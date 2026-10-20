@@ -65,13 +65,19 @@ fun_preprocess_hogares <- function(.db) {
       # el número de personas y cuartos puede aportar información adicional.
       num_personas_hogar = Nper,
       num_cuartos = P5000,
-      # P5130: arriendo hipotético, observado principalmente para viviendas
-      # no arrendadas; NA y códigos 98/99 se distinguen de los reportados
-      # con un indicador. El cero es solo un valor de relleno.
-      bin_arriendo_reportado = as.integer(
-        !is.na(P5130) & !(P5130 %in% c(98, 99))),
-      num_arriendo_estimado = if_else(
-        bin_arriendo_reportado == 1L, as.numeric(P5130), 0)
+      # Arriendo. P5140 (cuánto pagan) solo se pregunta a quienes arriendan,
+      # y P5130 (cuánto estiman que pagarían) a todos los demás: las dos
+      # preguntas son complementarias y, combinadas, cubren a todos los
+      # hogares. Ambas usan 98 (no sabe) y 99 (no informa).
+      num_arriendo = coalesce(as.numeric(P5140), as.numeric(P5130)),
+      bin_arriendo_nd = as.integer(num_arriendo %in% c(98, 99)),
+      # Por persona y en logaritmo: el arriendo aproxima el valor de la
+      # vivienda, que se reparte entre quienes la habitan (Nper, como en el
+      # hacinamiento), y su distribución es muy asimétrica. A quienes no
+      # saben o no informan se les asigna 0; el indicador anterior los
+      # distingue del resto.
+      num_log_arriendo_pc = if_else(bin_arriendo_nd == 1L, 0,
+                                    log(num_arriendo / Nper))
     )
   
   # La variable de resultado solo existe en train.
@@ -83,12 +89,12 @@ fun_preprocess_hogares <- function(.db) {
       mutate(Pobre = factor(Pobre, levels = c(1, 0), labels = c("Yes", "No"))) |>
       select(id, cat_ubicacion, cat_tenencia, num_personas_cuarto,
              num_personas_hogar, num_cuartos,
-             num_arriendo_estimado, bin_arriendo_reportado, Pobre)
+             num_log_arriendo_pc, bin_arriendo_nd, Pobre)
   } else {
     db_result <- db_result |>
       select(id, cat_ubicacion, cat_tenencia, num_personas_cuarto,
              num_personas_hogar, num_cuartos,
-             num_arriendo_estimado, bin_arriendo_reportado)
+             num_log_arriendo_pc, bin_arriendo_nd)
   }
   
   return(db_result)
