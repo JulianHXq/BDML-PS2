@@ -47,3 +47,5 @@ message("Proporción de pobres por fold de validación: ",
 saveRDS(cv_folds, "03_temp/cv_folds.rds")
 
 rm(train, cv_folds, hogares_validacion, prop_pobres)
+
+
