@@ -3,3 +3,6 @@ logit_X_4_completo_umbral_0_33,Logit,0.68,2026-10-17,Valentina Vera,Logit comple
 logit_X_1_vivienda_umbral_0_25,Logit,0.53,2026-10-17,Valentina Vera,Logit con predictores de vivienda; umbral 0.25 que maximiza F1 en CV
 logit_X_2_demografia_umbral_0_26,Logit,0.56,2026-10-17,Valentina Vera,Logit con predictores demográficos; umbral 0.26 que maximiza F1 en CV
 logit_X_3_empleo_umbral_0_29,Logit,0.61,2026-10-17,Valentina Vera,Logit con predictores de empleo; umbral 0.29 que maximiza F1 en CV
+logit_X_5_extendido_umbral_0_33,Logit,0.71,2026-10-20,Valentina Vera,Logit con 43 predictores; umbral 0.33 que maximiza F1 en CV
+cart_X_5_extendido_sin_cp_0_000134_umbral_0_28,CART,0.67,2026-10-20,Valentina Vera,CART con 43 predictores; sin rebalanceo; cp 0.000134; umbral 0.28
+cart_X_5_extendido_up_cp_0_000052_umbral_0_75,CART,0.68,2026-10-20,Valentina Vera,CART con 43 predictores; upsampling; cp 0.000052; umbral 0.75

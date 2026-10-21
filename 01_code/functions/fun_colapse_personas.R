@@ -79,13 +79,20 @@ fun_colapse_personas <- function(.db) {
               bin_jefe_ocupado = bin_occup[bin_head == 1],
               num_desocupados_ug = sum(bin_desocupado * bin_ug, na.rm = TRUE),
               num_estudiantes_ug = sum(bin_estudiante * bin_ug, na.rm = TRUE),
-              # Salud: conteos de respuestas positivas explícitas.
-              num_regimen_subsidiado_ug = sum(
-                bin_regimen_subsidiado * bin_ug, na.rm = TRUE),
-              num_regimen_contributivo_ug = sum(
-                bin_regimen_contributivo * bin_ug, na.rm = TRUE),
+              # Salud: personas que declaran no estar afiliadas. El régimen
+              # (subsidiado o contributivo, P6100) no se usa: la afiliación al
+              # régimen subsidiado depende en parte del SISBÉN, otro
+              # instrumento de focalización.
               num_no_afiliados_salud_ug = sum(
-                bin_no_afiliado_salud * bin_ug, na.rm = TRUE)) |>
+                bin_no_afiliado_salud * bin_ug, na.rm = TRUE),
+              # Calidad del empleo: subempleo, formalidad y tamaño de la
+              # empresa del jefe; y transferencias de otros hogares.
+              num_subempleo_ug = sum(bin_subempleo * bin_ug, na.rm = TRUE),
+              bin_prima_servicios_ug = max(bin_prima_servicios * bin_ug,
+                                           na.rm = TRUE),
+              bin_dinero_hogares_ug = max(bin_dinero_hogares * bin_ug,
+                                          na.rm = TRUE),
+              cat_tam_empresa_jefe = cat_tam_empresa[bin_head == 1]) |>
     mutate(
       # Tasa de dependencia: dependientes (menores de 18 y mayores de 65) por
       # cada persona en edad de trabajar (18 a 65), que son quienes pueden
@@ -132,8 +139,9 @@ fun_colapse_personas <- function(.db) {
            bin_jefe_ocupado, num_desocupados_ug, tasa_desempleo_ug,
            bin_sin_activos_ug, num_estudiantes_ug,
            prop_cotizantes_ocupados_ug,
-           num_regimen_subsidiado_ug, num_regimen_contributivo_ug,
-           num_no_afiliados_salud_ug) |>
+           num_no_afiliados_salud_ug, num_subempleo_ug,
+           bin_prima_servicios_ug, bin_dinero_hogares_ug,
+           cat_tam_empresa_jefe) |>
     ungroup()
   
   return(db_result)

@@ -39,7 +39,9 @@ fun_preprocess_personas <- function(.db) {
                  # Nuevas fuentes, presentes en train y test de personas.
                  'bin_des' = 'Des', 'cat_actividad' = 'P6240',
                  'cat_salud_afiliacion' = 'P6090',
-                 'cat_salud_regimen' = 'P6100')
+                 'cat_mas_horas' = 'P7090', 'cat_tam_empresa' = 'P6870',
+                 'cat_prima_servicios' = 'P6630s1',
+                 'cat_dinero_hogares' = 'P7510s1')
   
   db_result <- .db |>
     select(all_of(text_vars)) |>
@@ -124,10 +126,26 @@ fun_preprocess_personas <- function(.db) {
       bin_estudiante = as.integer(cat_actividad %in% 3),
       # P6090 = 2: declara no estar afiliado al sistema de salud.
       bin_no_afiliado_salud = as.integer(cat_salud_afiliacion %in% 2),
-      # P6100 = 1 contributivo, 3 subsidiado; un NA no se confunde
-      # con una declaración positiva de afiliación.
-      bin_regimen_contributivo = as.integer(cat_salud_regimen %in% 1),
-      bin_regimen_subsidiado = as.integer(cat_salud_regimen %in% 3)
+      # P7090: además de las horas que trabaja, ¿quiere trabajar más horas?
+      # 1 = sí, 2 = no. Solo se pregunta a los ocupados: NA = no ocupado.
+      # Mide subempleo por insuficiencia de horas.
+      bin_subempleo = as.integer(cat_mas_horas %in% 1),
+      # P6630s1: en los últimos 12 meses, ¿recibió prima de servicios?
+      # 1 = sí, 2 = no. Es una prestación del empleo formal asalariado; NA
+      # (no se le pregunta) significa que no la recibió.
+      bin_prima_servicios = as.integer(cat_prima_servicios %in% 1),
+      # P7510s1: en los últimos 12 meses, ¿recibió dinero de otros hogares o
+      # personas residentes en el país? 1 = sí, 2 = no, 9 = no sabe. Solo se
+      # pregunta a quien declaró otros ingresos en P7505: NA = no recibió.
+      bin_dinero_hogares = as.integer(cat_dinero_hogares %in% 1),
+      # P6870: personas que tiene la empresa donde trabaja. Solo se pregunta
+      # a los ocupados: NA pasa a "No ocupado".
+      cat_tam_empresa = factor(x = replace_na(cat_tam_empresa, 0),
+                               levels = 0:9,
+                               labels = c("No ocupado", "Solo", "2 a 3",
+                                          "4 a 5", "6 a 10", "11 a 19",
+                                          "20 a 30", "31 a 50", "51 a 100",
+                                          "101 o mas"))
     ) |>
     select(id, id_persona, bin_male, bin_head, bin_conyuge, bin_occup,
            bin_inactivo, bin_edad_trabajar, cat_educ, bin_minor, bin_old,
@@ -136,8 +154,8 @@ fun_preprocess_personas <- function(.db) {
            # Variables auxiliares nuevas para agregación al hogar.
            num_age, bin_female, bin_menor_6,
            bin_adulto_universitario, bin_desocupado, bin_estudiante,
-           bin_no_afiliado_salud, bin_regimen_contributivo,
-           bin_regimen_subsidiado)
+           bin_no_afiliado_salud, bin_subempleo, bin_prima_servicios,
+           bin_dinero_hogares, cat_tam_empresa)
   
   return(db_result)
 }
