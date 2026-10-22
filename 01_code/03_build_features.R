@@ -71,20 +71,33 @@ X_5_extendido <- c(X_4_completo,
                    "bin_prima_servicios_ug", "bin_dinero_hogares_ug",
                    "cat_tam_empresa_jefe")
 
+# Bloque 6. Conjunto detallado: X_5_extendido más los conteos de personas de
+# la unidad de gasto por categoría (fun_conteos_personas.R). Se define como
+# todas las columnas de la base, para que incluya automáticamente cualquier
+# variable nueva de la limpieza; los conjuntos anteriores son listas fijas y
+# no cambian.
+X_6_detallado <- union(X_5_extendido,
+                       setdiff(names(train), c("id", "Pobre")))
 
 predictores <- list(X_1_vivienda   = X_1_vivienda,
                     X_2_demografia = X_2_demografia,
                     X_3_empleo     = X_3_empleo,
                     X_4_completo   = X_4_completo,
-                    X_5_extendido  = X_5_extendido)
+                    X_5_extendido  = X_5_extendido,
+                    X_6_detallado  = X_6_detallado)
 
 # Verificaciones -----------------------------------------------------------
-# El conjunto completo debe tener exactamente los predictores de las bases:
-# si se agrega o quita una variable en la limpieza y no se actualiza aquí,
-# el script se detiene en lugar de dejar un conjunto incompleto.
-if (!setequal(X_5_extendido, setdiff(names(train), c("id", "Pobre"))) ||
-    !setequal(X_5_extendido, setdiff(names(test), "id"))) {
-  stop("X_5_extendido no coincide con los predictores de train y test.",
+# El conjunto más grande debe tener exactamente los predictores de las bases,
+# y cada conjunto debe existir en train y en test: si se quita o se renombra
+# una variable en la limpieza y no se actualiza aquí, el script se detiene en
+# lugar de dejar un conjunto incompleto.
+if (!setequal(X_6_detallado, setdiff(names(train), c("id", "Pobre"))) ||
+    !setequal(X_6_detallado, setdiff(names(test), "id"))) {
+  stop("X_6_detallado no coincide con los predictores de train y test.",
+       call. = FALSE)
+}
+if (!all(unlist(predictores) %in% names(test))) {
+  stop("Algún conjunto tiene variables que no están en las bases.",
        call. = FALSE)
 }
 # Ningún conjunto debe repetir variables.
@@ -100,4 +113,4 @@ message("Conjuntos de predictores: ",
 saveRDS(predictores, "03_temp/predictores.rds")
 
 rm(train, test, X_1_vivienda, X_2_demografia, X_3_empleo, X_4_completo, X_5_extendido,
-   predictores)
+   X_6_detallado, predictores)
