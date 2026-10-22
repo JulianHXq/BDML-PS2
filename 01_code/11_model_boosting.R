@@ -62,6 +62,16 @@ source("01_code/functions/fun_metricas.R")
 source("01_code/functions/fun_save_submission.R")
 
 
+# Función de una variante ----------------------------------
+# Todo el procedimiento del piloto queda dentro de una función que recibe el
+# conjunto de predictores. Así se corre la misma configuración con distintos
+# conjuntos sin duplicar el código, y cada envío anterior se sigue
+# reproduciendo con su mismo nombre de archivo.
+#   nombre_conjunto: conjunto de 03_temp/predictores.rds.
+#   prefijo_nombre:  texto que se agrega al nombre del archivo después de
+#                    "XGB_" ("" para conservar el nombre del primer envío).
+fun_xgb_piloto <- function(nombre_conjunto, prefijo_nombre = "") {
+
 # 1. CARGAR DATOS ------------------------------------------
 
 train <- readRDS("03_temp/train_clean.rds")
@@ -72,10 +82,6 @@ cv_folds <- readRDS("03_temp/cv_folds.rds")
 
 
 # 2. VALIDAR VARIABLES -------------------------------------
-
-# Conjunto utilizado en nuestro XGBoost original.
-
-nombre_conjunto <- "X_5_extendido"
 
 if (!is.list(predictores) ||
     !nombre_conjunto %in% names(predictores)) {
@@ -456,7 +462,7 @@ stopifnot(
 # Formato consistente con las convenciones del proyecto.
 
 nombre_submission <- paste0(
-  "XGB_depth_", parametros$max_depth,
+  "XGB_", prefijo_nombre, "depth_", parametros$max_depth,
   "_eta_010",
   "_mcw_", parametros$min_child_weight,
   "_rounds_", nrounds_final
@@ -522,9 +528,29 @@ cat("\nTiempo total:",
 
 cat("\nProceso terminado.\n")
 
+invisible(list(prob_oof = prob_oof, prob_test = prob_test,
+               umbral = umbral_final, f1_oof = f1_oof,
+               archivo = nombre_submission))
+}
+
+# Variantes del piloto ---------------------------------------
+# Primer envío (Kaggle 0,73): configuración piloto con X_5_extendido.
+xgb_X5 <- fun_xgb_piloto("X_5_extendido")
+# Misma configuración con X_6_detallado, que agrega los conteos de personas
+# por categoría.
+xgb_X6 <- fun_xgb_piloto("X_6_detallado", "X_6_detallado_")
+
 
 
 ############## xGBOOST EXHAUSTIVO
+
+# La búsqueda aleatoria de 250 configuraciones tarda varias horas. Se deja
+# desactivada por defecto para que correr este script no la dispare sin
+# querer. Para reproducir el envío "search250", cambiar a TRUE: el proceso
+# guarda su avance en 03_temp/ y se puede reanudar.
+EJECUTAR_BUSQUEDA <- FALSE
+
+if (EJECUTAR_BUSQUEDA) {
 
 library(xgboost)
 library(caret)
@@ -1080,3 +1106,4 @@ cat("Horas en esta ejecución:",
     round(as.numeric(difftime(Sys.time(), inicio_busqueda,
                               units = "hours")), 2), "\n")
 cat("Proceso terminado.\n")
+}
