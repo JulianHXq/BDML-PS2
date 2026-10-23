@@ -53,28 +53,51 @@ X_4_completo <- c(X_3_empleo,
                   "num_cotizantes", "bin_hogar_pensionado", "num_horas_ug",
                   "num_asalariados", "num_cuentapropia", "cat_pos_jefe")
 
-# Bloque 5. Conjunto extendido: X_4_completo más todas las variables
-# agregadas después (arriendo, demografía detallada, desempleo, estudiantes,
-# afiliación a salud, subempleo, formalidad y transferencias). Se define
-# como todas las columnas de la base para que incluya automáticamente
-# cualquier variable nueva de la limpieza.
-X_5_extendido <- union(X_4_completo,
-                       setdiff(names(train), c("id", "Pobre")))
+# Bloque 5. Conjunto extendido: X_4_completo más 22 variables agregadas
+# después (arriendo, demografía detallada, desempleo, estudiantes, afiliación
+# a salud, subempleo, formalidad y transferencias). Se escribe como una lista
+# fija, y no como "todas las columnas de la base", para que las variables que
+# se agreguen más adelante no cambien este conjunto: así los envíos hechos con
+# él se siguen reproduciendo. El orden es el mismo de la versión anterior.
+X_5_extendido <- c(X_4_completo,
+                   "num_personas_hogar", "num_cuartos", "num_log_arriendo_pc",
+                   "bin_arriendo_nd", "num_edad_jefe", "num_edad_promedio_ug",
+                   "prop_menores_ug", "prop_mujeres_ug", "num_menores_6_ug",
+                   "cat_educ_jefe", "num_adultos_universitarios_ug",
+                   "bin_jefe_ocupado", "num_desocupados_ug",
+                   "tasa_desempleo_ug", "bin_sin_activos_ug",
+                   "num_estudiantes_ug", "prop_cotizantes_ocupados_ug",
+                   "num_no_afiliados_salud_ug", "num_subempleo_ug",
+                   "bin_prima_servicios_ug", "bin_dinero_hogares_ug",
+                   "cat_tam_empresa_jefe")
 
+# Bloque 6. Conjunto detallado: X_5_extendido más los conteos de personas de
+# la unidad de gasto por categoría (fun_conteos_personas.R). Se define como
+# todas las columnas de la base, para que incluya automáticamente cualquier
+# variable nueva de la limpieza; los conjuntos anteriores son listas fijas y
+# no cambian.
+X_6_detallado <- union(X_5_extendido,
+                       setdiff(names(train), c("id", "Pobre")))
 
 predictores <- list(X_1_vivienda   = X_1_vivienda,
                     X_2_demografia = X_2_demografia,
                     X_3_empleo     = X_3_empleo,
                     X_4_completo   = X_4_completo,
-                    X_5_extendido  = X_5_extendido)
+                    X_5_extendido  = X_5_extendido,
+                    X_6_detallado  = X_6_detallado)
 
 # Verificaciones -----------------------------------------------------------
-# El conjunto completo debe tener exactamente los predictores de las bases:
-# si se agrega o quita una variable en la limpieza y no se actualiza aquí,
-# el script se detiene en lugar de dejar un conjunto incompleto.
-if (!setequal(X_5_extendido, setdiff(names(train), c("id", "Pobre"))) ||
-    !setequal(X_5_extendido, setdiff(names(test), "id"))) {
-  stop("X_5_extendido no coincide con los predictores de train y test.",
+# El conjunto más grande debe tener exactamente los predictores de las bases,
+# y cada conjunto debe existir en train y en test: si se quita o se renombra
+# una variable en la limpieza y no se actualiza aquí, el script se detiene en
+# lugar de dejar un conjunto incompleto.
+if (!setequal(X_6_detallado, setdiff(names(train), c("id", "Pobre"))) ||
+    !setequal(X_6_detallado, setdiff(names(test), "id"))) {
+  stop("X_6_detallado no coincide con los predictores de train y test.",
+       call. = FALSE)
+}
+if (!all(unlist(predictores) %in% names(test))) {
+  stop("Algún conjunto tiene variables que no están en las bases.",
        call. = FALSE)
 }
 # Ningún conjunto debe repetir variables.
@@ -90,4 +113,4 @@ message("Conjuntos de predictores: ",
 saveRDS(predictores, "03_temp/predictores.rds")
 
 rm(train, test, X_1_vivienda, X_2_demografia, X_3_empleo, X_4_completo, X_5_extendido,
-   predictores)
+   X_6_detallado, predictores)

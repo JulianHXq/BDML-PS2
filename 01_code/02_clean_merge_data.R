@@ -16,6 +16,7 @@ pacman::p_load(tidyverse)
 source("01_code/functions/fun_preprocess_personas.R")
 source("01_code/functions/fun_colapse_personas.R")
 source("01_code/functions/fun_preprocess_hogares.R")
+source("01_code/functions/fun_conteos_personas.R")
 
 # Lectura de los datos crudos ----------------------------------------------
 db_train_hogares  <- read.csv("00_data/raw/train_hogares.csv")
@@ -26,11 +27,13 @@ db_test_personas  <- read.csv("00_data/raw/test_personas.csv")
 # Personas: limpieza y colapso a nivel hogar -------------------------------
 db_train_personas_hogar <- db_train_personas |>
   fun_preprocess_personas() |>
-  fun_colapse_personas()
+  fun_colapse_personas() |>
+  left_join(fun_conteos_personas(db_train_personas), by = "id")
 
 db_test_personas_hogar <- db_test_personas |>
   fun_preprocess_personas() |>
-  fun_colapse_personas()
+  fun_colapse_personas() |>
+  left_join(fun_conteos_personas(db_test_personas), by = "id")
 
 # Hogares: preparación -----------------------------------------------------
 db_train_hogares <- fun_preprocess_hogares(db_train_hogares)
