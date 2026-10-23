@@ -247,20 +247,25 @@ fun_rf_variante <- function(.nombre_conjunto) {
 
   figura <- importancia |>
     slice_head(n = 15) |>
-    ggplot(aes(x = reorder(Variable, Importancia), y = Importancia)) +
+    ggplot(aes(x = reorder(Variable, Importancia_0_100),
+               y = Importancia_0_100)) +
     geom_col(fill = "steelblue", width = 0.7) +
-    coord_flip() +
+    coord_flip(clip = "off") +
+    scale_y_continuous(limits = c(0, 100),
+                       expand = expansion(mult = c(0, 0.02))) +
     labs(
       x = NULL,
-      y = "Caída del Brier score al permutar la variable (OOB)",
+      y = "Importancia relativa (0 a 100)",
       title = "Random forest: importancia por permutación",
       subtitle = paste0("mtry = ", mejor$mtry,
                         ", min.node.size = ", mejor$min.node.size,
                         ", árboles = ", n_trees,
                         ". La categoría base de cada factor no aparece.")
     ) +
-    theme_minimal()
-  ggsave(ruta_fig, plot = figura, width = 8, height = 6)
+    theme_minimal(base_size = 11) +
+    theme(plot.margin = margin(8, 16, 8, 8))
+  ggsave(ruta_fig, plot = figura, width = 9, height = 6.5, bg = "white",
+         device = grDevices::cairo_pdf)
   message("Importancia guardada en ", ruta_imp, " y ", ruta_fig, ".")
 
   # 4. Predicción en el test, con el bosque reentrenado con todo train.
