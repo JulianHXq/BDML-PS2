@@ -38,7 +38,7 @@
 
 # Preparación -------------------------------------------------------------
 if (!require(pacman)) install.packages("pacman")
-pacman::p_load(tidyverse, caret, pROC, ranger)
+pacman::p_load(tidyverse, caret, pROC, ranger, MLmetrics)
 
 source("01_code/functions/fun_metricas.R")
 source("01_code/functions/fun_save_submission.R")
