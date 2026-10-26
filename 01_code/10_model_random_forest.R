@@ -228,7 +228,7 @@ fun_rf_variante <- function(.nombre_conjunto) {
     importance = "permutation",
     seed = 2026
   )
-
+  #Revision de la importancia de variables por permutación. ranger la guarda en el modelo final.
   importancia <- tibble(
     Variable = names(modelo_final$finalModel$variable.importance),
     Importancia = as.numeric(modelo_final$finalModel$variable.importance)
