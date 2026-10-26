@@ -9,3 +9,4 @@ cart_X_5_extendido_up_cp_0_000052_umbral_0_75,CART,0.68,2026-10-20,Valentina Ver
 XGB_X_6_detallado_depth_5_eta_010_mcw_5_rounds_516,Boosting (XGBoost),0.76,2026-10-22,Valentina Vera,XGBoost con X6 (148 predictores); depth 5; eta 0.10; mcw 5; 516 rondas; umbral 0.37 que maximiza F1 en CV
 LGBM_hojas_31_lambda_10_alpha_01_iter_748_umbral_0375,Boosting (LightGBM),0.77,2026-10-23,Andrés Silva,LightGBM con X7 (1296 predictores); umbral 0.375; envío previo reemplazado por LGBM_X_7_ampliado_hojas_31_iter_748_umbral_0_39
 LGBM_X_7_ampliado_hojas_31_iter_748_umbral_0_39,Boosting (LightGBM),0.77,2026-10-25,Valentina Vera,LightGBM con X7 (1296 predictores); 31 hojas; learning rate 0.04; 748 rondas; umbral 0.39 que maximiza F1 en CV
+XGB_X_7_ampliado_depth_5_eta_010_mcw_5_rounds_388,Boosting (XGBoost),0.76,2026-10-25,Valentina Vera,XGBoost con X7 (1296 predictores); depth 5; eta 0.10; mcw 5; 388 rondas; umbral 0.39 que maximiza F1 en CV
