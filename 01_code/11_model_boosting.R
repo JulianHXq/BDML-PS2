@@ -513,6 +513,22 @@ fun_xgb_piloto <- function(nombre_conjunto, prefijo_nombre = "") {
     .nombre = nombre_submission
   )
   
+  # Registro con las predicciones fuera de muestra, para la comparación de
+  # algoritmos.
+  fun_registrar_oof(
+    .archivo = nombre_submission,
+    .algoritmo = "Boosting (XGBoost)",
+    .conjunto = nombre_conjunto,
+    .n_predictores = length(variables_xgb),
+    .hiperparametros = paste0("depth = ", parametros$max_depth, "; eta = ",
+                              parametros$eta, "; mcw = ",
+                              parametros$min_child_weight, "; rondas = ",
+                              nrounds_final),
+    .obs = train$Pobre,
+    .prob = prob_oof,
+    .umbral = umbral_final
+  )
+  
   
   # 12. RESUMEN FINAL -----------------------------------------
   
